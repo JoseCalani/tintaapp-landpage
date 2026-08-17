@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Eléctrico Bolivia - Tu Consumo Transparente</title>
+    <style>
+
+:root {
+    --primary: #059669;
+    --primary-dark: #047857;
+    --primary-light: #d1fae5;
+    --accent: #f59e0b;
+    --dark: #0f172a;
+    --gray-dark: #334155;
+    --gray: #64748b;
+    --gray-light: #f8fafc;
+    --border: #e2e8f0;
+    --white: #ffffff;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font);
+    color: var(--gray-dark);
+    background-color: #f1f5f9;
+    line-height: 1.6;
+}
+
+header {
+    background-color: var(--white);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: var(--primary-dark);
+    text-decoration: none;
+}
+
+.logo span {
+    background: var(--primary);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+nav a {
+    text-decoration: none;
+    color: var(--gray-dark);
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+nav a:hover, nav a.active {
+    color: var(--primary);
+}
+
+.btn-cta {
+    background: var(--primary);
+    color: white !important;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.btn-cta:hover {
+    background: var(--primary-dark);
+}
+
+footer {
+    background: var(--dark);
+    color: #94a3b8;
+    padding: 3rem 1.5rem 1.5rem 1.5rem;
+    margin-top: 4rem;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.footer-col h4 {
+    color: var(--white);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.footer-col ul {
+    list-style: none;
+}
+
+.footer-col ul li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-col a {
+    color: #94a3b8;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-col a:hover {
+    color: var(--white);
+}
+
+.footer-bottom {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid #334155;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+/* Page Common Header Banner */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.page-header h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+}
+
+/* Responsive Menu Simple */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">⚡ ElectriControl <span>Bolivia</span></a>
+            <nav>
+                <ul>
+                    <li><a href="index.html" >Simulador</a></li>
+<li><a href="planes.html" >Planes y Precios</a></li>
+<li><a href="reclamos.html" >Guía de Reclamos</a></li>
+<li><a href="testimonios.html" >Testimonios</a></li>
+<li><a href="faq.html" class='active'>Preguntas Frecuentes</a></li>
+<li><a href="contacto.html" >Contacto & Soporte</a></li>
+
+                    <li><a href="https://wa.me/59170000000" target="_blank" class="btn-cta">Descargar App</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="page-header">
+        <h1>Preguntas Frecuentes (FAQ)</h1>
+        <p>Aclara todas tus dudas sobre el uso de la aplicación, compatibilidad de empresas distribuidoras y cobros.</p>
+    </div>
+
+    <div class="container" style="max-width: 800px;">
+        <div class="card">
+            <h3 style="color: var(--primary-dark); margin-bottom: 0.5rem;">¿La app funciona con cualquier empresa distribuidora de Bolivia?</h3>
+            <p style="color: var(--gray-dark);">Sí, ElectriControl está adaptada al sistema tarifario nacional de Bolivia, incluyendo distribuidoras como ELFEC, DELAPAZ, CRE, ENDE del Beni, CESSA, SEPASA, entre otras.</p>
+        </div>
+
+        <div class="card">
+            <h3 style="color: var(--primary-dark); margin-bottom: 0.5rem;">¿Es obligatoria la versión Pro de 15 Bs.?</h3>
+            <p style="color: var(--gray-dark);">No. La versión gratuita funciona para siempre y te permite calcular consumos básicos e historial. El pago único de 15 Bs. sirve para desbloquear la cámara de escaneo y el generador legal de reclamos en PDF.</p>
+        </div>
+
+        <div class="card">
+            <h3 style="color: var(--primary-dark); margin-bottom: 0.5rem;">¿Cómo ayuda la app a reducir mi factura de luz?</h3>
+            <p style="color: var(--gray-dark);">La app identifica cuáles son los electrodomésticos que más consumen en tu hogar ("vampiros energéticos") y te advierte si estás a punto de perder la Tarifa Dignidad por unos pocos kWh de exceso.</p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h4>⚡ ElectriControl Bolivia</h4>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem;">La app diseñada para proteger el bolsillo de las familias bolivianas frente a cobros injustificados de energía eléctrica.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Secciones Principales</h4>
+                <ul>
+                    <li><a href="index.html">Simulador Web</a></li>
+                    <li><a href="planes.html">Planes Free vs Pro</a></li>
+                    <li><a href="reclamos.html">Derechos y Reclamos</a></li>
+                    <li><a href="testimonios.html">Casos de Éxito</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Soporte y Legal</h4>
+                <ul>
+                    <li><a href="faq.html">Preguntas Frecuentes</a></li>
+                    <li><a href="contacto.html">Contacto y Desarrolladores</a></li>
+                    <li><a href="#">Política de Privacidad</a></li>
+                    <li><a href="#">Términos de Servicio</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Atención Directa</h4>
+                <p style="font-size: 0.9rem; margin-bottom: 0.8rem;">¿Tienes cobros excesivos en ELFEC, CRE, DELAPAZ o ENDE?</p>
+                <a href="https://wa.me/59170000000" target="_blank" style="background:#25d366; color:white; padding:0.5rem 1rem; border-radius:6px; text-decoration:none; display:inline-block; font-weight:bold;">💬 WhatsApp de Soporte</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ElectriControl Bolivia. Aplicación desarrollada para la transparencia tarifaria en Bolivia.</p>
+        </div>
+    </footer>
+</body>
+</html>
