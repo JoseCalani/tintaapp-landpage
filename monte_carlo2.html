@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Consumo Eléctrico - Método Montecarlo</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --success: #16a34a;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0 0 10px 0; color: #0f172a; font-size: 1.8rem; }
+        p.subtitle { margin: 0; color: var(--text-light); font-size: 0.95rem; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: #0f172a;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .range-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .range-inputs input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .results-box {
+            display: none;
+            margin-top: 20px;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+        }
+
+        .result-stat {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--success);
+            margin: 5px 0 15px 0;
+        }
+
+        .explanation {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { background-color: #f1f5f9; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Simulador Montecarlo de Consumo Eléctrico</h1>
+        <p class="subtitle">Aplica el método de simulación estadística para estimar el rango de consumo diario real en el hogar, modelando la incertidumbre del uso de los aparatos.</p>
+    </header>
+
+    <div class="grid">
+        <!-- Panel de Configuración -->
+        <div class="card">
+            <h2>1. Parámetros del Hogar</h2>
+            <div class="form-group">
+                <label>Número de Simulaciones (Iteraciones)</label>
+                <input type="number" id="simulations" value="2000" min="100" max="10000" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+                <small style="color:var(--text-light); font-size:0.75rem;">A mayor número, más precisión estadística.</small>
+            </div>
+
+            <h3 style="font-size:1rem; margin-top:20px; color:var(--primary);">Configurar Rango de Uso Diario (Horas)</h3>
+            <p style="font-size:0.8rem; color:var(--text-light); margin-bottom:15px;">Defina el tiempo mínimo y máximo estimado que se usa cada aparato por día.</p>
+            
+            <div class="form-group">
+                <label>Aire Acondicionado (Potencia: 1500 W)</label>
+                <div class="range-inputs">
+                    <input type="number" id="ac_min" value="2" min="0" max="24" step="0.5" placeholder="Mín (hs)">
+                    <input type="number" id="ac_max" value="7" min="0" max="24" step="0.5" placeholder="Máx (hs)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Refrigerador / Nevera (Potencia: 200 W - Uso Intermitente)</label>
+                <div class="range-inputs">
+                    <input type="number" id="ref_min" value="8" min="0" max="24" step="0.5" placeholder="Mín (hs)">
+                    <input type="number" id="ref_max" value="14" min="0" max="24" step="0.5" placeholder="Máx (hs)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Televisor y Consolas (Potencia: 150 W)</label>
+                <div class="range-inputs">
+                    <input type="number" id="tv_min" value="1" min="0" max="24" step="0.5" placeholder="Mín (hs)">
+                    <input type="number" id="tv_max" value="5" min="0" max="24" step="0.5" placeholder="Máx (hs)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Iluminación Total LED (Potencia combinada: 100 W)</label>
+                <div class="range-inputs">
+                    <input type="number" id="light_min" value="4" min="0" max="24" step="0.5" placeholder="Mín (hs)">
+                    <input type="number" id="light_max" value="8" min="0" max="24" step="0.5" placeholder="Máx (hs)">
+                </div>
+            </div>
+
+            <button onclick="runMonteCarlo()">Ejecutar Simulación Montecarlo</button>
+        </div>
+
+        <!-- Panel de Resultados -->
+        <div class="card">
+            <h2>2. Resultados Estadísticos</h2>
+            <p style="margin-top:0; font-size:0.9rem;">El algoritmo simulará miles de días aleatorios posibles dentro de tus rangos para calcular el escenario más probable.</p>
+            
+            <div id="results" class="results-box">
+                <label style="color:#0f172a;">⚡ Consumo Diario Más Probable (Media):</label>
+                <div id="result-mean" class="result-stat">0.00 kWh</div>
+
+                <label style="color:#0f172a;">📈 Rango de Variabilidad Seguro (90% de Confianza):</label>
+                <div id="result-range" style="font-weight: 600; margin-bottom: 15px;">Entre 0.00 y 0.00 kWh</div>
+
+                <label style="color:#0f172a;">Estadísticas de la Simulación:</label>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Métrica</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Consumo Mínimo Absoluto Simulado</td>
+                            <td id="stat-min">0.00 kWh</td>
+                        </tr>
+                        <tr>
+                            <td>Consumo Máximo Absoluto Simulado</td>
+                            <td id="stat-max">0.00 kWh</td>
+                        </tr>
+                        <tr>
+                            <td>Desviación Estándar (Volatilidad)</td>
+                            <td id="stat-std">0.00 kWh</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="explanation">
+                    <strong>¿Qué pasó aquí?</strong> El método generó valores aleatorios de horas de uso independientes para cada aparato usando una <em>distribución uniforme</em> entre el mínimo y máximo definidos, repitiendo el proceso las veces indicadas. Esto refleja que nunca usamos exactamente las mismas horas de electricidad todos los días.
+                </div>
+            </div>
+
+            <div id="placeholder-text" style="color:var(--text-light); text-align:center; padding: 40px 0;">
+                Haz clic en el botón para generar y analizar los datos estadísticos.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function runMonteCarlo() {
+        // Obtener iteraciones
+        const nSim = parseInt(document.getElementById('simulations').value) || 1000;
+
+        // Potencias en kW
+        const pAC = 1.500;
+        const pRef = 0.200;
+        const pTv = 0.150;
+        const pLight = 0.100;
+
+        // Rangos de horas
+        const acMin = parseFloat(document.getElementById('ac_min').value) || 0;
+        const acMax = parseFloat(document.getElementById('ac_max').value) || 0;
+        const refMin = parseFloat(document.getElementById('ref_min').value) || 0;
+        const refMax = parseFloat(document.getElementById('ref_max').value) || 0;
+        const tvMin = parseFloat(document.getElementById('tv_min').value) || 0;
+        const tvMax = parseFloat(document.getElementById('tv_max').value) || 0;
+        const lightMin = parseFloat(document.getElementById('light_min').value) || 0;
+        const lightMax = parseFloat(document.getElementById('light_max').value) || 0;
+
+        let results = [];
+
+        // Bucle Montecarlo
+        for (let i = 0; i < nSim; i++) {
+            // Generar horas aleatorias usando distribución uniforme continua entre min y max
+            const hAC = Math.random() * (acMax - acMin) + acMin;
+            const hRef = Math.random() * (refMax - refMin) + refMin;
+            const hTv = Math.random() * (tvMax - tvMin) + tvMin;
+            const hLight = Math.random() * (lightMax - lightMin) + lightMin;
+
+            // Calcular consumo del día simulado
+            const dailyConsumption = (hAC * pAC) + (hRef * pRef) + (hTv * pTv) + (hLight * pLight);
+            results.push(dailyConsumption);
+        }
+
+        // Ordenar resultados para percentiles
+        results.sort((a, b) => a - b);
+
+        // Cálculos estadísticos
+        const sum = results.reduce((a, b) => a + b, 0);
+        const mean = sum / nSim;
+
+        const minVal = results[0];
+        const maxVal = results[results.length - 1];
+
+        // Desviación Estándar
+        const squareDiffs = results.map(value => Math.pow(value - mean, 2));
+        const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / nSim;
+        const stdDev = Math.sqrt(avgSquareDiff);
+
+        // Intervalo de confianza del 90% (Percentil 5 y Percentil 95)
+        const p5Idx = Math.floor(nSim * 0.05);
+        const p95Idx = Math.floor(nSim * 0.95);
+        const p5 = results[p5Idx];
+        const p95 = results[p95Idx];
+
+        // Renderizar resultados en la interfaz
+        document.getElementById('placeholder-text').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+
+        document.getElementById('result-mean').innerText = `${mean.toFixed(2)} kWh`;
+        document.getElementById('result-range').innerText = `Entre ${p5.toFixed(2)} kWh y ${p95.toFixed(2)} kWh por día`;
+        document.getElementById('stat-min').innerText = `${minVal.toFixed(2)} kWh`;
+        document.getElementById('stat-max').innerText = `${maxVal.toFixed(2)} kWh`;
+        document.getElementById('stat-std').innerText = `${stdDev.toFixed(2)} kWh`;
+    }
+</script>
+
+</body>
+</html>

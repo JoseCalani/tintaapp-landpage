@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        function simularMontecarlo() {
+            alert(" valor de Pi ...");
+    let dentroDelCirculo = 0;
+    let intentos = prompt("Ingrese el número de intentos para la simulación de Monte Carlo:");
+
+    for (let i = 0; i < intentos; i++) {
+        // 1. Generar coordenadas aleatorias X e Y entre -1 y 1
+        let x = Math.random() * 2 - 1;
+        let y = Math.random() * 2 - 1;
+
+        // 2. Aplicar la ecuación del círculo (X² + Y² <= 1)
+        if (x * x + y * y <= 1) {
+            dentroDelCirculo++; // Registrar si el dardo cayó dentro
+        }
+    }
+
+    // 3. Consolidar resultados estadísticos
+    // Probabilidad de caer dentro = dentroDelCirculo / intentos
+    // Como el área del cuadrado es 4 (de -1 a 1 en ambos ejes), multiplicamos por 4
+    let piEstimado = (dentroDelCirculo / intentos) * 4;
+    
+    console.log(`Con ${intentos.toLocaleString()} intentos, Pi estimado es: ${piEstimado}`);
+}
+
+// --- EJECUCIÓN ---
+simularMontecarlo();         // Resultado impreciso (pocas muestras)
+simularMontecarlo();      // Comienza a aproximarse
+simularMontecarlo();   // Convergencia estadística de alta precisión
+
+    </script>
+</body>
+</html>
