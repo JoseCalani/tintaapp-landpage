@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop Cuadrados</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+
+        .dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        .drop-zone-active {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
+
+    <div class="max-w-5xl mx-auto p-6 pt-12">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-700 mb-3">Generador de Cuadros</h1>
+            <p class="text-slate-500">Escribe un texto, genera un cuadro y arrástralo de un contenedor a otro.</p>
+        </header>
+
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <input 
+                type="text" 
+                id="textInput" 
+                placeholder="Escribe algo aquí..." 
+                class="w-full sm:w-72 px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                autocomplete="off"
+            >
+            <button 
+                id="generateBtn" 
+                class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Generar Cuadro
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Cuadro A -->
+            <div class="flex flex-col">
+                <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">Cuadro A</h2>
+                <div 
+                    id="boxA" 
+                    class="flex-1 min-h-[400px] border-2 border-dashed border-slate-300 rounded-2xl bg-white p-4 flex flex-wrap content-start gap-3 transition-all duration-200"
+                >
+                    <!-- Los cuadrados se generarán aquí -->
+                </div>
+            </div>
+
+            <!-- Cuadro B -->
+            <div class="flex flex-col">
+                <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">Cuadro B</h2>
+                <div 
+                    id="boxB" 
+                    class="flex-1 min-h-[400px] border-2 border-dashed border-slate-300 rounded-2xl bg-white p-4 flex flex-wrap content-start gap-3 transition-all duration-200"
+                >
+                    <!-- Los cuadrados cambiarán de color al caer aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('textInput');
+            const btn = document.getElementById('generateBtn');
+            const boxA = document.getElementById('boxA');
+            const boxB = document.getElementById('boxB');
+            let squareIdCounter = 0;
+
+            // Función para crear un nuevo cuadrado
+            const createSquare = () => {
+                const text = input.value.trim();
+                
+                if (text === '') {
+                    // Feedback visual si el input está vacío (animación de sacudida)
+                    input.classList.add('ring-2', 'ring-red-500');
+                    setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 500);
+                    return;
+                }
+
+                squareIdCounter++;
+                const square = document.createElement('div');
+                square.id = `square-${squareIdCounter}`;
+                square.textContent = text;
+                square.draggable = true; // Hace que el elemento sea arrastrable
+                
+                // Clases por defecto (Diseño en Cuadro A)
+                square.className = 'cursor-grab bg-blue-500 text-white px-4 py-3 rounded-xl shadow-md font-medium text-sm flex items-center justify-center transition-all duration-300 min-w-[80px] break-all select-none hover:shadow-lg hover:-translate-y-0.5';
+
+                // Eventos de Drag para el cuadrado
+                square.addEventListener('dragstart', (e) => {
+                    // Guardamos el ID del elemento que se está arrastrando
+                    e.dataTransfer.setData('text/plain', e.target.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    
+                    // Añadimos una clase para cambiar el aspecto visual al arrastrar
+                    setTimeout(() => {
+                        e.target.classList.add('dragging');
+                        e.target.classList.replace('cursor-grab', 'cursor-grabbing');
+                    }, 0);
+                });
+
+                square.addEventListener('dragend', (e) => {
+                    e.target.classList.remove('dragging');
+                    e.target.classList.replace('cursor-grabbing', 'cursor-grab');
+                });
+
+                // Agregamos el cuadro al Cuadro A y limpiamos el input
+                boxA.appendChild(square);
+                input.value = '';
+                input.focus();
+            };
+
+            // Evento click del botón
+            btn.addEventListener('click', createSquare);
+
+            // Evento "Enter" en el input
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    createSquare();
+                }
+            });
+
+            // Configurar los contenedores (Cuadro A y Cuadro B) como zonas de soltado (Drop Zones)
+            const dropZones = [boxA, boxB];
+
+            dropZones.forEach(zone => {
+                // Evento al pasar por encima de la zona con un elemento
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault(); // Obligatorio para permitir el "drop"
+                    e.dataTransfer.dropEffect = 'move';
+                    zone.classList.add('drop-zone-active');
+                });
+
+                // Evento al salir de la zona
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drop-zone-active');
+                });
+
+                // Evento al soltar el elemento en la zona
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drop-zone-active');
+
+                    // Obtenemos el ID del elemento arrastrado
+                    const draggedElementId = e.dataTransfer.getData('text/plain');
+                    const draggedElement = document.getElementById(draggedElementId);
+
+                    if (draggedElement) {
+                        // Movemos el elemento al nuevo contenedor
+                        zone.appendChild(draggedElement);
+
+                        // Lógica de cambio de color según el contenedor final
+                        if (zone.id === 'boxB') {
+                            // Cambia a un color llamativo (Rosa/Morado) si está en el Cuadro B
+                            draggedElement.classList.remove('bg-blue-500');
+                            draggedElement.classList.add('bg-fuchsia-600', 'scale-105');
+                        } else if (zone.id === 'boxA') {
+                            // Vuelve al color original (Azul) si regresa al Cuadro A
+                            draggedElement.classList.remove('bg-fuchsia-600', 'scale-105');
+                            draggedElement.classList.add('bg-blue-500');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
