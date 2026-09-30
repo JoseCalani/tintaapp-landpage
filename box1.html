@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Dispositivos Eléctricos</title>
+    <style>
+        :root {
+            /* Paleta de colores principal */
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-body: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            
+            /* Colores para las zonas y tarjetas */
+            --zone-a-bg: #f1f5f9;
+            --zone-a-border: #94a3b8;
+            --zone-b-bg: #f0fdf4;
+            --zone-b-border: #22c55e;
+            
+            --card-a-bg: #ffffff;
+            --card-a-accent: #3b82f6;
+            --card-b-bg: #dcfce7;
+            --card-b-accent: #16a34a;
+            
+            /* Utilidades */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 992px) {
+            .container {
+                grid-template-columns: 350px 1fr;
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            grid-column: 1 / -1;
+        }
+
+        header h1 {
+            color: var(--text-main);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+        }
+
+        .form-panel {
+            background-color: var(--surface);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            height: fit-content;
+        }
+
+        .form-panel h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--bg-body);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: var(--bg-body);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+            background-color: var(--surface);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.875rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .workspace {
+                flex-direction: row;
+            }
+        }
+
+        .drop-zone-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drop-zone-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .drop-zone {
+            flex: 1;
+            min-height: 400px;
+            border: 2px dashed;
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: var(--transition);
+            overflow-y: auto;
+        }
+
+        #zoneA {
+            background-color: var(--zone-a-bg);
+            border-color: var(--zone-a-border);
+        }
+
+        #zoneB {
+            background-color: var(--zone-b-bg);
+            border-color: var(--zone-b-border);
+        }
+
+        .drop-zone.drag-over {
+            filter: brightness(0.95);
+            transform: scale(1.01);
+        }
+
+        .card {
+            background-color: var(--card-a-bg);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--card-a-accent);
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+            user-select: none;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card:active {
+            cursor: grabbing;
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        /* Estilos específicos cuando la tarjeta está en la Zona B */
+        #zoneB .card {
+            background-color: var(--card-b-bg);
+            border-left-color: var(--card-b-accent);
+            color: #064e3b;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        #zoneB .card-header {
+            border-bottom-color: #bbf7d0;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .card-category {
+            font-size: 0.75rem;
+            background-color: #e2e8f0;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        #zoneB .card-category {
+            background-color: #bbf7d0;
+            color: #166534;
+        }
+
+        .card-body {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            text-align: center;
+        }
+
+        .data-point {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .data-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #zoneB .data-label {
+            color: #166534;
+        }
+
+        .data-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Gestor de Consumo Eléctrico</h1>
+            <p>Registra dispositivos y asígnalos a la zona de evaluación arrastrándolos.</p>
+        </header>
+
+        <aside class="form-panel">
+            <h2>Nuevo Dispositivo</h2>
+            <form id="applianceForm">
+                <div class="form-group">
+                    <label for="appName">Dispositivo:</label>
+                    <input type="text" id="appName" class="form-control" placeholder="Ejemplo: Refrigerador LG" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="appCategory">Categoría</label>
+                    <select id="appCategory" class="form-control" required>
+                        <option value="" disabled selected>Selecciona una categoría</option>
+                        <option value="Línea Blanca">Línea Blanca</option>
+                        <option value="Climatización">Climatización</option>
+                        <option value="Entretenimiento">Entretenimiento</option>
+                        <option value="Iluminación">Iluminación</option>
+                        <option value="Informática">Informática</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="appPower">Potencia (Watts)</label>
+                    <input type="number" id="appPower" class="form-control" placeholder="Ej. 150" min="1" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="appMinHours">Uso Mínimo (Hrs/día)</label>
+                        <input type="number" id="appMinHours" class="form-control" placeholder="0" min="0" max="24" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appMaxHours">Uso Máximo (Hrs/día)</label>
+                        <input type="number" id="appMaxHours" class="form-control" placeholder="24" min="0" max="24" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Guardar</button>
+            </form>
+        </aside>
+
+        <main class="workspace">
+            <div class="drop-zone-container">
+                <div class="drop-zone-title">
+                    <span>Objetos:</span> Inventario
+                </div>
+                <div id="zoneA" class="drop-zone">
+                    <!-- Las tarjetas generadas aparecerán aquí -->
+                </div>
+            </div>
+
+            <div class="drop-zone-container">
+                <div class="drop-zone-title">
+                    <span>Aparatos de consumo:</span>Mi Hogar
+                </div>
+                <div id="zoneB" class="drop-zone">
+                   
+                </div>
+            </div>
+            <button onclick="calcular()">Calcular</button>
+        </main>
+    </div>
+
+    <script>
+
+        function montecarlo() {
+               // --- 1. CONFIGURACIÓN DEL PROBLEMA ---
+
+// Consumo real medido que queremos descifrar (en Watts-hora, ej: 10 kWh)
+const CONSUMO_TOTAL_REAL = 10000; 
+
+// Lista de aparatos con su potencia (Watts) y límites lógicos de horas al día [mínimo, máximo]
+const aparatos = {
+    nevera:        { potencia: 150,  horasMin: 10, horasMax: 24 }, // Ciclos intermitentes
+    aireAcond:     { potencia: 1200, horasMin: 2,  horasMax: 8  }, // Uso por temporadas/horas
+    televisor:     { potencia: 100,  horasMin: 1,  horasMax: 6  }, // Entretenimiento
+    lavadora:      { potencia: 500,  horasMin: 0,  horasMax: 2  }, // Uso ocasional
+    microondas:    { potencia: 800,  horasMin: 0.1,horasMax: 0.5}  // Minutos al día (0.1h = 6 min)
+};
+
+// --- 2. CONFIGURACIÓN DE MONTECARLO ---
+const ITERACIONES = 500000; // Cuántas combinaciones al azar probaremos
+const MARGEN_ERROR = 100;    // Tolerancia en Wh (aceptamos combinaciones que sumen entre 9900 y 10100 Wh)
+            // Aquí iría la lógica de Monte Carlo para calcular el consumo eléctrico
+            alert("Simulación de Monte Carlo iniciada...");
+            // Aquí guardaremos las combinaciones que logren sumar el consumo real
+    let combinacionesExitosas = [];
+
+    // Inicializamos contadores para promediar los tiempos al final
+    let totales = { nevera: 0, aireAcond: 0, televisor: 0, lavadora: 0, microondas: 0 };
+
+    for (let i = 0; i < ITERACIONES; i++) {
+        // PASO A: Generar un tiempo aleatorio lógico para cada aparato
+        let tiemposSimulados = {};
+        for (let nombre in aparatos) {
+            let config = aparatos[nombre];
+            // Elige un número decimal al azar entre el mínimo y máximo de horas de ese aparato
+            tiemposSimulados[nombre] = Math.random() * (config.horasMax - config.horasMin) + config.horasMin;
+        }
+
+        // PASO B: Calcular el consumo total de esta combinación aleatoria
+        let consumoSimulado = 0;
+        for (let nombre in aparatos) {
+            consumoSimulado += tiemposSimulados[nombre] * aparatos[nombre].potencia;
+        }
+
+        // PASO C: Filtrar. ¿Esta combinación aleatoria se acerca al consumo real?
+        if (Math.abs(consumoSimulado - CONSUMO_TOTAL_REAL) <= MARGEN_ERROR) {
+            combinacionesExitosas.push(tiemposSimulados);
+            
+            // Sumar al acumulador para el promedio posterior
+            for (let nombre in aparatos) {
+                totales[nombre] += tiemposSimulados[nombre];
+            }
+        }
+    }
+
+    // --- 3. CONSOLIDACIÓN Y RESULTADOS ---
+    const totalExitos = combinacionesExitosas.length;
+
+    if (totalExitos === 0) {
+        console.log("No se encontraron combinaciones válidas. Intenta aumentar el MARGEN_ERROR o revisa si los rangos de horas configurados pueden sumar matemáticamente tu consumo real.");
+        return;
+    }
+
+    console.log(`\n=== RESULTADOS DE LA SIMULACIÓN DE MONTECARLO ===`);
+    console.log(`Se encontraron ${totalExitos.toLocaleString()} combinaciones válidas de uso diario.`);
+    alert(`Se encontraron ${totalExitos.toLocaleString()} combinaciones válidas de uso diario. Revisa la consola para más detalles.`);
+    console.log(`Para un consumo total de: ${CONSUMO_TOTAL_REAL} Wh\n`);
+    alert(`Para un consumo total de: ${CONSUMO_TOTAL_REAL} Wh\n`);
+    console.log(`Tiempo estimado de encendido por aparato:`);
+    alert(`Tiempo estimado de encendido por aparato: Revisa la consola para más detalles.`);
+
+    let s ="";
+    for (let nombre in aparatos) {
+        // Promediamos el tiempo de todas las soluciones que fueron válidas
+        let horasPromedio = totales[nombre] / totalExitos;
+        
+        // Convertir la parte decimal a minutos para que sea más legible
+        let horasEnteras = Math.floor(horasPromedio);
+        let minutos = Math.round((horasPromedio - horasEnteras) * 60);
+
+        console.log(`- ${nombre.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.`);
+        s+=`- ${nombre.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.\n`;
+    }
+    alert(s);
+    
+        }
+
+        function calcular(){
+            alert("Calculando consumo total...");
+         
+
+            montecarlo();
+        }
+
+        
+
+
+
+        function editCard(cardId) {
+            alert("Editar tarjeta: " + cardId);
+            const card = document.getElementById(cardId);
+            if (!card) return;
+
+            // Extraer los datos actuales de la tarjeta
+            const title = card.querySelector('.card-title').textContent;
+            const category = card.querySelector('.card-category').textContent;
+            const power = card.querySelector('.card-power').textContent.replace(' W', '');
+            const minHours = card.querySelector('.min-hours').textContent.replace(' h', '');
+            const maxHours = card.querySelector('.max-hours').textContent.replace(' h', '');
+
+            // Llenar el formulario con los datos actuales
+            document.getElementById('appName').value = title;
+            document.getElementById('appCategory').value = category;
+            document.getElementById('appPower').value = power;
+            document.getElementById('appMinHours').value = minHours;
+            document.getElementById('appMaxHours').value = maxHours;
+
+            // Eliminar la tarjeta actual para reemplazarla al guardar
+            // card.remove();
+        }
+
+        let contadores = [{id:0,valor:0}]; 
+
+        function newCopyElem(elem){
+            var numElem =1;
+            var elemento = elem.cloneNode(true);
+            var button_plus = document.createElement('button');
+            var button_minus = document.createElement('button');
+            button_plus.textContent = "+1";
+            button_minus.textContent = "-1";
+            contadores.push({id:elem.id,valor:0});
+            button_plus.addEventListener('click', () => {
+                // alert()
+                //numElem = contadores.find(c => c.id === elem.id).valor++;
+                numElem++;
+                span.textContent = "Cantidad: " + numElem;
+            });
+            button_minus.addEventListener('click', () => {
+                if (numElem > 1) {
+                    numElem--;
+                    span.textContent = "Cantidad: " + numElem;
+                }
+            });
+            var span = document.createElement('span');
+            span.textContent = "Cantidad: " + numElem;
+            elemento.appendChild(span);
+            elemento.appendChild(button_plus);
+            elemento.appendChild(button_minus);
+            return elemento;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('applianceForm');
+            const zoneA = document.getElementById('zoneA');
+            const zoneB = document.getElementById('zoneB');
+            let cardCounter = 0;
+
+            // Manejador del envío del formulario
+            form.addEventListener('submit', (e) => {
+                e.preventDefault(); // Evita que la página se recargue
+
+                // 1. Obtener valores del formulario
+                const name = document.getElementById('appName').value.trim();
+                const category = document.getElementById('appCategory').value;
+                const power = document.getElementById('appPower').value;
+                const minHours = document.getElementById('appMinHours').value;
+                const maxHours = document.getElementById('appMaxHours').value;
+
+                // Validación simple de horas
+                if (parseInt(minHours) > parseInt(maxHours)) {
+                    alert('El uso mínimo no puede ser mayor al uso máximo.');
+                    return;
+                }
+
+                // 2. Crear la tarjeta
+                cardCounter++;
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.draggable = true;
+                card.id = `app-card-${cardCounter}`;
+
+                // 3. Construir el HTML interno de la tarjeta con los datos
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-title">${name}</span>
+                        <span class="card-category">${category}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-point">
+                            <span class="data-label">Potencia</span>
+                            <span class="card-power">${power} W</span>
+                        </div>
+                        <div class="data-point">
+                            <span class="data-label">Uso Mín.</span>
+                            <span class="min-hours">${minHours} h</span>
+                        </div>
+                        <div class="data-point">
+                            <span class="data-label">Uso Máx.</span>
+                            <span class="max-hours">${maxHours} h</span>
+                        </div>
+                        <div>
+                            <button onclick="editCard('${card.id}')">Editar</button>
+                            </div>
+
+                    </div>
+                `;
+
+                // 4. Configurar eventos de Drag & Drop para esta tarjeta específica
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+
+                // 5. Agregar la tarjeta al Cuadro A y resetear el formulario
+                zoneA.appendChild(card);
+                form.reset();
+                document.getElementById('appName').focus();
+            });
+            
+
+            // --- Lógica de Drag and Drop ---
+
+            function handleDragStart(e) {
+                // Guardamos el ID del elemento arrastrado
+                e.dataTransfer.setData('text/plain', e.target.id);
+                e.dataTransfer.effectAllowed = 'move';
+                
+                // Usamos setTimeout para que la clase se aplique después de que el navegador 
+                // haya tomado la "foto" del elemento arrastrado.
+                setTimeout(() => {
+                    e.target.classList.add('dragging');
+                }, 0);
+            }
+
+            function handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+            }
+
+            // Configurar los contenedores (Zonas) para recibir elementos
+            const dropZones = [zoneA, zoneB];
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault(); // Necesario para permitir el drop
+                    e.dataTransfer.dropEffect = 'move';
+                    zone.classList.add('drag-over');
+                });
+
+                zone.addEventListener('dragleave', (e) => {
+                    zone.classList.remove('drag-over');
+                });
+
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+
+                    // Recuperar el ID del elemento arrastrado
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    const draggedElement = document.getElementById(draggedId);
+
+                    
+
+                    if (draggedElement) {
+                        // Mover el elemento al nuevo contenedor
+                        // Nota: El cambio de color se maneja automáticamente mediante CSS 
+                        // utilizando selectores descendentes (#zoneB .card)
+                        if (zone.id === 'zoneB') {
+                            const clonedElement = newCopyElem(draggedElement);
+                            clonedElement.id = draggedId + '_copia_' + Date.now();
+                            clonedElement.addEventListener('dragstart', handleDragStart);
+                            clonedElement.addEventListener('dragend', handleDragEnd);
+                            clonedElement.classList.remove('dragging');
+                            zone.appendChild(clonedElement);
+
+                        } 
+                        else if(zone.id === 'zoneA' && draggedElement.parentElement.id === 'zoneB') {
+                            // Si se suelta en la Zona A, simplemente mover el elemento original
+                            draggedElement.remove();
+                        }
+                        
+                        else{
+                            zone.appendChild(draggedElement);
+                        } 
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
