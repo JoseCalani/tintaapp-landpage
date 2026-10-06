@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Consumo Eléctrico</title>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --accent: #f59e0b;
+            --success: #16a34a;
+            --bg: #f3f6fa;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --zone-a: #f8fafc;
+            --zone-b: #f0fdf4;
+            --zone-b-border: #86efac;
+            --shadow: 0 8px 30px rgba(15, 23, 42, .07);
+            --shadow-hover: 0 12px 30px rgba(15, 23, 42, .13);
+            --radius: 16px;
+            --radius-sm: 11px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 8% 0%, rgba(37, 99, 235, .07), transparent 28%),
+                radial-gradient(circle at 92% 100%, rgba(22, 163, 74, .06), transparent 30%),
+                var(--bg);
+            overflow: hidden;
+        }
+
+        button, input, select {
+            font: inherit;
+        }
+
+        /* =========================
+           CONTENEDOR PRINCIPAL
+           ========================= */
+
+        .container {
+            width: min(1480px, calc(100% - 28px));
+            height: calc(100vh - 28px);
+            min-height: 600px;
+            margin: 14px auto;
+            display: grid;
+            grid-template-columns: 285px minmax(0, 1fr);
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 14px;
+        }
+
+        /* =========================
+           HEADER COMPACTO
+           ========================= */
+
+        header {
+            grid-column: 1 / -1;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: rgba(255,255,255,.92);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            background: linear-gradient(145deg, #2563eb, #1e40af);
+            box-shadow: 0 7px 18px rgba(37,99,235,.25);
+            font-size: 20px;
+        }
+
+        header h1 {
+            font-size: 18px;
+            line-height: 1.15;
+            letter-spacing: -.3px;
+        }
+
+        header p {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+        }
+
+        /* =========================
+           PANEL DEL FORMULARIO
+           ========================= */
+
+        .form-panel {
+            min-height: 0;
+            overflow: hidden;
+            padding: 17px;
+            background: rgba(255,255,255,.94);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .panel-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-heading-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 17px;
+        }
+
+        .form-panel h2 {
+            font-size: 14px;
+            font-weight: 750;
+        }
+
+        .form-panel .subtitle {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            outline: none;
+            color: var(--text);
+            background: var(--surface-soft);
+            font-size: 12px;
+            transition: .2s ease;
+        }
+
+        .form-control:hover {
+            border-color: var(--border-strong);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .form-row .form-group {
+            min-width: 0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            height: 38px;
+            margin-top: 4px;
+            border: 0;
+            border-radius: 10px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            font-size: 12px;
+            font-weight: 750;
+            cursor: pointer;
+            box-shadow: 0 7px 15px rgba(37,99,235,.20);
+            transition: .2s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(37,99,235,.25);
+        }
+
+        /* =========================
+           ÁREA DE TRABAJO
+           ========================= */
+
+        .workspace {
+            min-width: 0;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-rows: minmax(0, 1fr) 40px;
+            gap: 12px;
+        }
+
+        .drop-zone-container {
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drop-zone-title {
+            height: 34px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 4px;
+            color: #334155;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .zone-icon {
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            background: #e0edff;
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .zone-title-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.05;
+        }
+
+        .zone-title-text small {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 500;
+        }
+
+        .zone-count {
+            margin-left: auto;
+            min-width: 24px;
+            height: 22px;
+            padding: 0 7px;
+            display: grid;
+            place-items: center;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .drop-zone {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            grid-auto-rows: max-content;
+            align-content: start;
+            gap: 9px;
+            border: 1px dashed var(--border-strong);
+            border-radius: var(--radius);
+            background: rgba(248,250,252,.72);
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            transition: .2s ease;
+        }
+
+        #zoneB {
+            border-color: var(--zone-b-border);
+            background: rgba(240,253,244,.72);
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--primary);
+            background: #eff6ff;
+            box-shadow: inset 0 0 0 2px rgba(37,99,235,.08);
+        }
+
+        #zoneB.drag-over {
+            border-color: #22c55e;
+            background: #ecfdf5;
+        }
+
+        /* =========================
+           TARJETAS DE ELECTRODOMÉSTICOS
+           ========================= */
+
+        .card {
+            min-width: 0;
+            position: relative;
+            padding: 11px;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 3px 12px rgba(15,23,42,.055);
+            cursor: grab;
+            user-select: none;
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: #bfdbfe;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card:active {
+            cursor: grabbing;
+        }
+
+        .card.dragging {
+            opacity: .45;
+            transform: scale(.97) rotate(1deg);
+        }
+
+        #zoneB .card {
+            border-left-color: var(--success);
+            background: #fff;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 9px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            flex: 0 0 32px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 17px;
+        }
+
+        #zoneB .card-icon {
+            background: #ecfdf5;
+            color: var(--success);
+        }
+
+        .card-heading {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .card-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .card-category {
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .data-point {
+            min-width: 0;
+            padding: 5px 3px;
+            text-align: center;
+            border-radius: 7px;
+            background: #f8fafc;
+        }
+
+        #zoneB .data-point {
+            background: #f0fdf4;
+        }
+
+        .data-label {
+            display: block;
+            color: var(--muted);
+            font-size: 7px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+
+        .data-value {
+            display: block;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        /* Estado vacío generado visualmente sin modificar IDs */
+        .drop-zone:empty::before {
+            content: "Arrastra aquí tus aparatos";
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        /* =========================
+           BOTÓN CALCULAR
+           ========================= */
+
+        .workspace > button {
+            grid-column: 1 / -1;
+            width: 100%;
+            height: 40px;
+            border: 0;
+            border-radius: 11px;
+            color: #fff;
+            background: linear-gradient(135deg, #0f172a, #334155);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 7px 16px rgba(15,23,42,.16);
+            transition: .2s ease;
+        }
+
+        .workspace > button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(15,23,42,.22);
+        }
+
+        /* =========================
+           SCROLLBAR
+           ========================= */
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            border-radius: 20px;
+            background: #cbd5e1;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* =========================
+           RESPONSIVE
+           ========================= */
+
+        @media (max-width: 900px) {
+            body {
+                overflow: auto;
+            }
+
+            .container {
+                height: auto;
+                min-height: calc(100vh - 20px);
+                margin: 10px auto;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto minmax(520px, 1fr);
+            }
+
+            header {
+                height: auto;
+                min-height: 64px;
+            }
+
+            .form-panel {
+                overflow: visible;
+            }
+
+            .workspace {
+                min-height: 520px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .container {
+                width: calc(100% - 16px);
+                margin: 8px auto;
+            }
+
+            header {
+                padding: 12px 14px;
+            }
+
+            .header-status {
+                display: none;
+            }
+
+            .workspace {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(260px, 1fr) minmax(260px, 1fr) 40px;
+            }
+
+            .drop-zone {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <header>
+            <div class="brand">
+                <div class="brand-icon">⚡</div>
+                <div>
+                    <h1>Gestor de Consumo Eléctrico</h1>
+                    <p>Organiza tus electrodomésticos y analiza su consumo.</p>
+                </div>
+            </div>
+
+            <div class="header-status">
+                <span class="status-dot"></span>
+                Sistema listo
+            </div>
+        </header>
+
+        <aside class="form-panel">
+            <div class="panel-heading">
+                <div class="panel-heading-icon">＋</div>
+                <div>
+                    <h2>Nuevo dispositivo</h2>
+                    <div class="subtitle">Añade un aparato al inventario</div>
+                </div>
+            </div>
+
+            <form id="applianceForm">
+
+                <div class="form-group">
+                    <label for="appName">Dispositivo</label>
+                    <input
+                        type="text"
+                        id="appName"
+                        class="form-control"
+                        placeholder="Ej. Refrigerador LG"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="appCategory">Categoría</label>
+                    <select id="appCategory" class="form-control" required>
+                        <option value="" disabled selected>Selecciona una categoría</option>
+                        <option value="Línea Blanca">Línea Blanca</option>
+                        <option value="Climatización">Climatización</option>
+                        <option value="Entretenimiento">Entretenimiento</option>
+                        <option value="Iluminación">Iluminación</option>
+                        <option value="Informática">Informática</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="appPower">Potencia (Watts)</label>
+                    <input
+                        type="number"
+                        id="appPower"
+                        class="form-control"
+                        placeholder="Ej. 150"
+                        min="1"
+                        required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="appMinHours">Mín. horas/día</label>
+                        <input
+                            type="number"
+                            id="appMinHours"
+                            class="form-control"
+                            placeholder="0"
+                            min="0"
+                            max="24"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appMaxHours">Máx. horas/día</label>
+                        <input
+                            type="number"
+                            id="appMaxHours"
+                            class="form-control"
+                            placeholder="24"
+                            min="0"
+                            max="24"
+                            required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Guardar dispositivo</button>
+            </form>
+        </aside>
+
+        <main class="workspace">
+
+            <div class="drop-zone-container">
+                <div class="drop-zone-title">
+                    <span class="zone-icon">▦</span>
+                    <span class="zone-title-text">
+                        Inventario
+                        <small>Dispositivos disponibles</small>
+                    </span>
+                    <span class="zone-count" id="inventoryCount">0</span>
+                </div>
+
+                <div id="zoneA" class="drop-zone">
+                    <!-- Las tarjetas generadas aparecerán aquí -->
+                </div>
+            </div>
+
+            <div class="drop-zone-container">
+                <div class="drop-zone-title">
+                    <span class="zone-icon">⌂</span>
+                    <span class="zone-title-text">
+                        Mi Hogar
+                        <small>Aparatos seleccionados</small>
+                    </span>
+                    <span class="zone-count" id="homeCount">0</span>
+                </div>
+
+                <div id="zoneB" class="drop-zone">
+                </div>
+            </div>
+
+            <button onclick="calcular()">Calcular consumo</button>
+
+        </main>
+    </div>
+
+    <script>
+
+        let lista_aparatos = {};
+        let lista_aparatos2 = {};
+        let aparatos = {};
+
+
+        function montecarlo() {
+            aparatos = lista_aparatos2;
+               
+                // Consumo real medido que queremos descifrar (en Watts-hora, ej: 10 kWh)
+                const CONSUMO_TOTAL_REAL = 1000; 
+
+                // Lista de aparatos con su power (Watts) y límites lógicos de horas al día [mínimo, máximo]
+                // const aparatos = {
+                //     nevera:        { power: 150,  minHours: 10, maxHours: 24 }, // Ciclos intermitentes
+                //     aireAcond:     { power: 1200, minHours: 2,  maxHours: 8  }, // Uso por temporadas/horas
+                //     televisor:     { power: 100,  minHours: 1,  maxHours: 6  }, // Entretenimiento
+                //     lavadora:      { power: 500,  minHours: 0,  maxHours: 2  }, // Uso ocasional
+                //     microondas:    { power: 800,  minHours: 0.1,maxHours: 0.5}  // Minutos al día (0.1h = 6 min)
+                // };
+                
+
+                const ITERACIONES = 20;// 500000; // Cuántas combinaciones al azar probaremos
+                const MARGEN_ERROR = 400;    // Tolerancia en Wh (aceptamos combinaciones que sumen entre 9900 y 10100 Wh)
+                            // Aquí guardaremos las combinaciones que logren sumar el consumo real
+                    let combinacionesExitosas = [];
+
+                    // Inicializamos contadores para promediar los tiempos al final
+                    let totales = {};
+
+                    console.log("totales iniciales:", totales);
+                    console.log("aparatos a evaluar>>", aparatos);
+                    for (let aparato in aparatos) {
+                        totales[aparato] = 0;
+                    }
+                    console.log("contadores totales inicializados:", totales);
+
+                    for (let i = 0; i < ITERACIONES; i++) {
+                        // PASO A: Generar un tiempo aleatorio lógico para cada aparato
+                        let tiemposSimulados = {};
+                        for (let nombre in aparatos) {
+                            let config = aparatos[nombre];
+                            tiemposSimulados[nombre] = Math.random() * (config.maxHours - config.minHours) + config.minHours;
+                        }
+                        let consumoSimulado = 0;
+                        for (let nombre in aparatos) {
+                            consumoSimulado += tiemposSimulados[nombre] * aparatos[nombre].power;
+                            
+                        }
+
+                        if (Math.abs(consumoSimulado - CONSUMO_TOTAL_REAL) <= MARGEN_ERROR) {
+                            combinacionesExitosas.push(tiemposSimulados);
+                            
+                            for (let aparato in aparatos) {
+                                totales[aparato] = Number(totales[aparato]) + Number(tiemposSimulados[aparato]);
+                            }
+                        }
+                    }
+
+                    // --- 3. CONSOLIDACIÓN Y RESULTADOS ---
+                    const totalExitos = combinacionesExitosas.length;
+
+                    if (totalExitos === 0) {
+                        console.log("No se encontraron combinaciones válidas. Intenta aumentar el MARGEN_ERROR o revisa si los rangos de horas configurados pueden sumar matemáticamente tu consumo real.");
+                        return;
+                    }
+
+                    console.log(`\n=== RESULTADOS DE LA SIMULACIÓN DE MONTECARLO ===`);
+                    console.log(`Se encontraron ${totalExitos.toLocaleString()} combinaciones válidas de uso diario.`);
+                    console.log(`Para un consumo total de: ${CONSUMO_TOTAL_REAL} Wh\n`);
+                    console.log(`Tiempo estimado de encendido por aparato:`);
+
+                    let s ="";
+                    console.log("totales>>", totales);
+                    for (let aparato in aparatos) {
+                        // Promediamos el tiempo de todas las soluciones que fueron válidas
+                        console.log("aparato>>", totales[aparato],"nombre:", aparato, "totalExitos>>", totalExitos);
+                        let horasPromedio = totales[aparato] / totalExitos;
+                        
+                        // Convertir la parte decimal a minutos para que sea más legible
+                        let horasEnteras = Math.floor(horasPromedio);
+                        let minutos = Math.round((horasPromedio - horasEnteras) * 60);
+
+                        console.log(`- ${aparato.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.`);
+                        s+=`- ${aparato.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.\n`;
+                    }
+                    alert(s);
+                    
+                        }
+
+        function calcular(){
+            console.log("__________________________________________________");
+            console.log("lista:", aparatos);
+            console.log("iniciando calculo montecarlo:...");
+            montecarlo();
+            console.log("__________________________________________________");
+        }
+
+        
+
+
+
+        function editCard(cardId) {
+            alert("Editar tarjeta: " + cardId);
+            const card = document.getElementById(cardId);
+            if (!card) return;
+
+            // Extraer los datos actuales de la tarjeta
+            const title = card.querySelector('.card-title').textContent;
+            const category = card.querySelector('.card-category').textContent;
+            const power = card.querySelector('.card-power').textContent.replace(' W', '');
+            const minHours = card.querySelector('.min-hours').textContent.replace(' h', '');
+            const maxHours = card.querySelector('.max-hours').textContent.replace(' h', '');
+
+            document.getElementById('appName').value = title;
+            document.getElementById('appCategory').value = category;
+            document.getElementById('appPower').value = power;
+            document.getElementById('appMinHours').value = minHours;
+            document.getElementById('appMaxHours').value = maxHours;
+        }
+
+        
+        let contadores = [{id:0,valor:0}]; 
+
+        function newCopyElem(elem){
+            var numElem =1;
+            var elemento = elem.cloneNode(true);
+            var button_plus = document.createElement('button');
+            var button_minus = document.createElement('button');
+            button_plus.textContent = "+1";
+            button_minus.textContent = "-1";
+            contadores.push({id:elem.id,valor:0});
+            button_plus.addEventListener('click', () => {
+                // alert()
+                //numElem = contadores.find(c => c.id === elem.id).valor++;
+                numElem++;
+                span.textContent = "Cantidad: " + numElem;
+                addToList(elem.id);
+            });
+            button_minus.addEventListener('click', () => {
+                if (numElem > 1) {
+                    numElem--;
+                    removeFromList(elem.id);
+                    span.textContent = "Cantidad: " + numElem;
+                }
+            });
+            var span = document.createElement('span');
+            span.textContent = "Cantidad: " + numElem;
+            elemento.appendChild(span);
+            elemento.appendChild(button_plus);
+            elemento.appendChild(button_minus);
+            addToList(elem.id);
+            return elemento;
+        }
+
+        let contador_lista = 0; // Contador para el objeto lista_aparatos2
+
+        function addToList(id){
+            lista_aparatos2[id+contador_lista] = lista_aparatos[id];
+            contador_lista++;
+            console.log("id elementos arrastrados:",lista_aparatos2);
+
+        }
+        function removeFromList(id){
+             const llaves = Object.keys(lista_aparatos2);
+             if (llaves.length > 0) {
+                const ultimaLlave = llaves[llaves.length - 1];
+             
+        // 3. Borramos el elemento del objeto
+        delete lista_aparatos2[ultimaLlave];// error
+             }
+            console.log("id elementos arrastrados:",lista_aparatos2);
+            // según el id proporcionado.
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('applianceForm');
+            const zoneA = document.getElementById('zoneA');
+            const zoneB = document.getElementById('zoneB');
+            let cardCounter = 0;
+
+            // Manejador del envío del formulario
+            form.addEventListener('submit', (e) => {
+                e.preventDefault(); // Evita que la página se recargue
+
+                // 1. Obtener valores del formulario
+                const name = document.getElementById('appName').value.trim();
+                const category = document.getElementById('appCategory').value;
+                const power = document.getElementById('appPower').value;
+                const minHours = document.getElementById('appMinHours').value;
+                const maxHours = document.getElementById('appMaxHours').value;
+
+                // Validación simple de horas
+                if (parseInt(minHours) > parseInt(maxHours)) {
+                    alert('El uso mínimo no puede ser mayor al uso máximo.');
+                    return;
+                }
+
+                // 2. Crear la tarjeta
+                cardCounter++;
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.draggable = true;
+                card.id = `app-card-${cardCounter}`;
+
+                // 3. Construir el HTML interno de la tarjeta con los datos
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-title">${name}</span>
+                        <span class="card-category">${category}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-point">
+                            <span class="data-label">Potencia</span>
+                            <span class="card-power">${power} W</span>
+                        </div>
+                        <div class="data-point">
+                            <span class="data-label">Uso Mín.</span>
+                            <span class="min-hours">${minHours} h</span>
+                        </div>
+                        <div class="data-point">
+                            <span class="data-label">Uso Máx.</span>
+                            <span class="max-hours">${maxHours} h</span>
+                        </div>
+                        <div>
+                            <button onclick="editCard('${card.id}')">Editar</button>
+                            </div>
+
+                    </div>
+                `;
+                lista_aparatos[card.id] = { name, category, power, minHours, maxHours };
+                console.log("Aparato agregado a la lista:", lista_aparatos);
+                
+
+                // 4. Configurar eventos de Drag & Drop para esta tarjeta específica
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+
+                // 5. Agregar la tarjeta al Cuadro A y resetear el formulario
+                zoneA.appendChild(card);
+                form.reset();
+                document.getElementById('appName').focus();
+            });
+            
+
+            // --- Lógica de Drag and Drop ---
+
+            function handleDragStart(e) {
+                // Guardamos el ID del elemento arrastrado
+                e.dataTransfer.setData('text/plain', e.target.id);
+                e.dataTransfer.effectAllowed = 'move';
+                
+                // Usamos setTimeout para que la clase se aplique después de que el navegador 
+                // haya tomado la "foto" del elemento arrastrado.
+                setTimeout(() => {
+                    e.target.classList.add('dragging');
+                }, 0);
+            }
+
+            function handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+            }
+
+            // Configurar los contenedores (Zonas) para recibir elementos
+            const dropZones = [zoneA, zoneB];
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault(); // Necesario para permitir el drop
+                    e.dataTransfer.dropEffect = 'move';
+                    zone.classList.add('drag-over');
+                });
+
+                zone.addEventListener('dragleave', (e) => {
+                    zone.classList.remove('drag-over');
+                });
+
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+
+                    // Recuperar el ID del elemento arrastrado
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    const draggedElement = document.getElementById(draggedId);
+
+                    
+
+                    if (draggedElement) {
+                        // Mover el elemento al nuevo contenedor
+                        // Nota: El cambio de color se maneja automáticamente mediante CSS 
+                        // utilizando selectores descendentes (#zoneB .card)
+                        if (zone.id === 'zoneB') {
+                            const clonedElement = newCopyElem(draggedElement);
+                            clonedElement.id = draggedId + '_copia_' + Date.now();
+                            clonedElement.addEventListener('dragstart', handleDragStart);
+                            clonedElement.addEventListener('dragend', handleDragEnd);
+                            clonedElement.classList.remove('dragging');
+                            zone.appendChild(clonedElement);
+                            
+                            
+
+                        } 
+                        else if(zone.id === 'zoneA' && draggedElement.parentElement.id === 'zoneB') {
+                            // Si se suelta en la Zona A, simplemente mover el elemento original
+                            draggedElement.remove();
+                        }
+                        
+                        else{
+                            zone.appendChild(draggedElement);
+                        } 
+                    }
+                });
+            });
+        });
+        /*
+         * La interfaz conserva los IDs originales:
+         * applianceForm, appName, appCategory, appPower,
+         * appMinHours, appMaxHours, zoneA y zoneB.
+         *
+         * Esta parte proporciona una implementación funcional de ejemplo.
+         * Si ya tienes tu propio JavaScript, puedes conservarlo y sustituir
+         * únicamente el diseño/CSS de esta página.
+         */
+
+        const form = document.getElementById("applianceForm");
+        const zoneA = document.getElementById("zoneA");
+        const zoneB = document.getElementById("zoneB");
+
+        const icons = {
+            "Línea Blanca": "▣",
+            "Climatización": "❄",
+            "Entretenimiento": "▶",
+            "Iluminación": "💡",
+            "Informática": "⌨",
+            "default": "⚡"
+        };
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById("appName").value.trim();
+            const category = document.getElementById("appCategory").value;
+            const power = document.getElementById("appPower").value;
+            const minHours = document.getElementById("appMinHours").value;
+            const maxHours = document.getElementById("appMaxHours").value;
+
+            if (!name || !category || !power || minHours === "" || maxHours === "") {
+                return;
+            }
+
+            if (Number(minHours) > Number(maxHours)) {
+                alert("Las horas mínimas no pueden ser mayores que las horas máximas.");
+                return;
+            }
+
+            const card = document.createElement("article");
+            card.className = "card";
+            card.draggable = true;
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-icon">${icons[category] || icons.default}</div>
+                    <div class="card-heading">
+                        <div class="card-title" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+                        <div class="card-category">${escapeHtml(category)}</div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="data-point">
+                        <span class="data-label">Potencia</span>
+                        <span class="data-value">${power} W</span>
+                    </div>
+
+                    <div class="data-point">
+                        <span class="data-label">Mín.</span>
+                        <span class="data-value">${minHours} h</span>
+                    </div>
+
+                    <div class="data-point">
+                        <span class="data-label">Máx.</span>
+                        <span class="data-value">${maxHours} h</span>
+                    </div>
+                </div>
+            `;
+
+            enableDrag(card);
+            zoneA.appendChild(card);
+            form.reset();
+            updateCounters();
+        });
+
+        function enableDrag(card) {
+            card.addEventListener("dragstart", function () {
+                card.classList.add("dragging");
+            });
+
+            card.addEventListener("dragend", function () {
+                card.classList.remove("dragging");
+                updateCounters();
+            });
+        }
+
+        [zoneA, zoneB].forEach(zone => {
+            zone.addEventListener("dragover", function (event) {
+                event.preventDefault();
+                zone.classList.add("drag-over");
+
+                const dragging = document.querySelector(".dragging");
+                if (dragging) {
+                    zone.appendChild(dragging);
+                }
+            });
+
+            zone.addEventListener("dragleave", function (event) {
+                if (!zone.contains(event.relatedTarget)) {
+                    zone.classList.remove("drag-over");
+                }
+            });
+
+            zone.addEventListener("drop", function () {
+                zone.classList.remove("drag-over");
+                updateCounters();
+            });
+        });
+
+        function updateCounters() {
+            document.getElementById("inventoryCount").textContent =
+                zoneA.querySelectorAll(".card").length;
+
+            document.getElementById("homeCount").textContent =
+                zoneB.querySelectorAll(".card").length;
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement("div");
+            div.textContent = value;
+            return div.innerHTML;
+        }
+
+        function calcular() {
+            const cards = zoneB.querySelectorAll(".card");
+
+            if (!cards.length) {
+                alert("Agrega al menos un dispositivo a Mi Hogar.");
+                return;
+            }
+
+            let totalMin = 0;
+            let totalMax = 0;
+
+            cards.forEach(card => {
+                const values = card.querySelectorAll(".data-value");
+
+                const power = parseFloat(values[0].textContent) || 0;
+                const min = parseFloat(values[1].textContent) || 0;
+                const max = parseFloat(values[2].textContent) || 0;
+
+                totalMin += (power * min) / 1000;
+                totalMax += (power * max) / 1000;
+            });
+
+            alert(
+                "Consumo estimado diario\n\n" +
+                "Mínimo: " + totalMin.toFixed(2) + " kWh/día\n" +
+                "Máximo: " + totalMax.toFixed(2) + " kWh/día"
+            );
+        }
+    </script>
+
+</body>
+</html>

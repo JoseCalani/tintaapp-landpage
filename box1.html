@@ -367,95 +367,102 @@
 
     <script>
 
+
+        let lista_aparatos = {};
+        let lista_aparatos2 = {};
+        let aparatos = {};
+
+
         function montecarlo() {
-               // --- 1. CONFIGURACIÓN DEL PROBLEMA ---
+            aparatos = lista_aparatos2;
+               
+                // Consumo real medido que queremos descifrar (en Watts-hora, ej: 10 kWh)
+                const CONSUMO_TOTAL_REAL = 1000; 
 
-// Consumo real medido que queremos descifrar (en Watts-hora, ej: 10 kWh)
-const CONSUMO_TOTAL_REAL = 10000; 
+                // Lista de aparatos con su power (Watts) y límites lógicos de horas al día [mínimo, máximo]
+                // const aparatos = {
+                //     nevera:        { power: 150,  minHours: 10, maxHours: 24 }, // Ciclos intermitentes
+                //     aireAcond:     { power: 1200, minHours: 2,  maxHours: 8  }, // Uso por temporadas/horas
+                //     televisor:     { power: 100,  minHours: 1,  maxHours: 6  }, // Entretenimiento
+                //     lavadora:      { power: 500,  minHours: 0,  maxHours: 2  }, // Uso ocasional
+                //     microondas:    { power: 800,  minHours: 0.1,maxHours: 0.5}  // Minutos al día (0.1h = 6 min)
+                // };
+                
 
-// Lista de aparatos con su potencia (Watts) y límites lógicos de horas al día [mínimo, máximo]
-const aparatos = {
-    nevera:        { potencia: 150,  horasMin: 10, horasMax: 24 }, // Ciclos intermitentes
-    aireAcond:     { potencia: 1200, horasMin: 2,  horasMax: 8  }, // Uso por temporadas/horas
-    televisor:     { potencia: 100,  horasMin: 1,  horasMax: 6  }, // Entretenimiento
-    lavadora:      { potencia: 500,  horasMin: 0,  horasMax: 2  }, // Uso ocasional
-    microondas:    { potencia: 800,  horasMin: 0.1,horasMax: 0.5}  // Minutos al día (0.1h = 6 min)
-};
+                const ITERACIONES = 20;// 500000; // Cuántas combinaciones al azar probaremos
+                const MARGEN_ERROR = 400;    // Tolerancia en Wh (aceptamos combinaciones que sumen entre 9900 y 10100 Wh)
+                            // Aquí guardaremos las combinaciones que logren sumar el consumo real
+                    let combinacionesExitosas = [];
 
-// --- 2. CONFIGURACIÓN DE MONTECARLO ---
-const ITERACIONES = 500000; // Cuántas combinaciones al azar probaremos
-const MARGEN_ERROR = 100;    // Tolerancia en Wh (aceptamos combinaciones que sumen entre 9900 y 10100 Wh)
-            // Aquí iría la lógica de Monte Carlo para calcular el consumo eléctrico
-            alert("Simulación de Monte Carlo iniciada...");
-            // Aquí guardaremos las combinaciones que logren sumar el consumo real
-    let combinacionesExitosas = [];
+                    // Inicializamos contadores para promediar los tiempos al final
+                    let totales = {};
 
-    // Inicializamos contadores para promediar los tiempos al final
-    let totales = { nevera: 0, aireAcond: 0, televisor: 0, lavadora: 0, microondas: 0 };
+                    console.log("totales iniciales:", totales);
+                    console.log("aparatos a evaluar>>", aparatos);
+                    for (let aparato in aparatos) {
+                        totales[aparato] = 0;
+                    }
+                    console.log("contadores totales inicializados:", totales);
 
-    for (let i = 0; i < ITERACIONES; i++) {
-        // PASO A: Generar un tiempo aleatorio lógico para cada aparato
-        let tiemposSimulados = {};
-        for (let nombre in aparatos) {
-            let config = aparatos[nombre];
-            // Elige un número decimal al azar entre el mínimo y máximo de horas de ese aparato
-            tiemposSimulados[nombre] = Math.random() * (config.horasMax - config.horasMin) + config.horasMin;
-        }
+                    for (let i = 0; i < ITERACIONES; i++) {
+                        // PASO A: Generar un tiempo aleatorio lógico para cada aparato
+                        let tiemposSimulados = {};
+                        for (let nombre in aparatos) {
+                            let config = aparatos[nombre];
+                            tiemposSimulados[nombre] = Math.random() * (config.maxHours - config.minHours) + config.minHours;
+                        }
+                        let consumoSimulado = 0;
+                        for (let nombre in aparatos) {
+                            consumoSimulado += tiemposSimulados[nombre] * aparatos[nombre].power;
+                            
+                        }
 
-        // PASO B: Calcular el consumo total de esta combinación aleatoria
-        let consumoSimulado = 0;
-        for (let nombre in aparatos) {
-            consumoSimulado += tiemposSimulados[nombre] * aparatos[nombre].potencia;
-        }
+                        if (Math.abs(consumoSimulado - CONSUMO_TOTAL_REAL) <= MARGEN_ERROR) {
+                            combinacionesExitosas.push(tiemposSimulados);
+                            
+                            for (let aparato in aparatos) {
+                                totales[aparato] = Number(totales[aparato]) + Number(tiemposSimulados[aparato]);
+                            }
+                        }
+                    }
 
-        // PASO C: Filtrar. ¿Esta combinación aleatoria se acerca al consumo real?
-        if (Math.abs(consumoSimulado - CONSUMO_TOTAL_REAL) <= MARGEN_ERROR) {
-            combinacionesExitosas.push(tiemposSimulados);
-            
-            // Sumar al acumulador para el promedio posterior
-            for (let nombre in aparatos) {
-                totales[nombre] += tiemposSimulados[nombre];
-            }
-        }
-    }
+                    // --- 3. CONSOLIDACIÓN Y RESULTADOS ---
+                    const totalExitos = combinacionesExitosas.length;
 
-    // --- 3. CONSOLIDACIÓN Y RESULTADOS ---
-    const totalExitos = combinacionesExitosas.length;
+                    if (totalExitos === 0) {
+                        console.log("No se encontraron combinaciones válidas. Intenta aumentar el MARGEN_ERROR o revisa si los rangos de horas configurados pueden sumar matemáticamente tu consumo real.");
+                        return;
+                    }
 
-    if (totalExitos === 0) {
-        console.log("No se encontraron combinaciones válidas. Intenta aumentar el MARGEN_ERROR o revisa si los rangos de horas configurados pueden sumar matemáticamente tu consumo real.");
-        return;
-    }
+                    console.log(`\n=== RESULTADOS DE LA SIMULACIÓN DE MONTECARLO ===`);
+                    console.log(`Se encontraron ${totalExitos.toLocaleString()} combinaciones válidas de uso diario.`);
+                    console.log(`Para un consumo total de: ${CONSUMO_TOTAL_REAL} Wh\n`);
+                    console.log(`Tiempo estimado de encendido por aparato:`);
 
-    console.log(`\n=== RESULTADOS DE LA SIMULACIÓN DE MONTECARLO ===`);
-    console.log(`Se encontraron ${totalExitos.toLocaleString()} combinaciones válidas de uso diario.`);
-    alert(`Se encontraron ${totalExitos.toLocaleString()} combinaciones válidas de uso diario. Revisa la consola para más detalles.`);
-    console.log(`Para un consumo total de: ${CONSUMO_TOTAL_REAL} Wh\n`);
-    alert(`Para un consumo total de: ${CONSUMO_TOTAL_REAL} Wh\n`);
-    console.log(`Tiempo estimado de encendido por aparato:`);
-    alert(`Tiempo estimado de encendido por aparato: Revisa la consola para más detalles.`);
+                    let s ="";
+                    console.log("totales>>", totales);
+                    for (let aparato in aparatos) {
+                        // Promediamos el tiempo de todas las soluciones que fueron válidas
+                        console.log("aparato>>", totales[aparato],"nombre:", aparato, "totalExitos>>", totalExitos);
+                        let horasPromedio = totales[aparato] / totalExitos;
+                        
+                        // Convertir la parte decimal a minutos para que sea más legible
+                        let horasEnteras = Math.floor(horasPromedio);
+                        let minutos = Math.round((horasPromedio - horasEnteras) * 60);
 
-    let s ="";
-    for (let nombre in aparatos) {
-        // Promediamos el tiempo de todas las soluciones que fueron válidas
-        let horasPromedio = totales[nombre] / totalExitos;
-        
-        // Convertir la parte decimal a minutos para que sea más legible
-        let horasEnteras = Math.floor(horasPromedio);
-        let minutos = Math.round((horasPromedio - horasEnteras) * 60);
-
-        console.log(`- ${nombre.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.`);
-        s+=`- ${nombre.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.\n`;
-    }
-    alert(s);
-    
-        }
+                        console.log(`- ${aparato.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.`);
+                        s+=`- ${aparato.padEnd(12)}: ~ ${horasEnteras}h ${minutos}m al día.\n`;
+                    }
+                    alert(s);
+                    
+                        }
 
         function calcular(){
-            alert("Calculando consumo total...");
-         
-
+            console.log("__________________________________________________");
+            console.log("lista:", aparatos);
+            console.log("iniciando calculo montecarlo:...");
             montecarlo();
+            console.log("__________________________________________________");
         }
 
         
@@ -474,17 +481,14 @@ const MARGEN_ERROR = 100;    // Tolerancia en Wh (aceptamos combinaciones que su
             const minHours = card.querySelector('.min-hours').textContent.replace(' h', '');
             const maxHours = card.querySelector('.max-hours').textContent.replace(' h', '');
 
-            // Llenar el formulario con los datos actuales
             document.getElementById('appName').value = title;
             document.getElementById('appCategory').value = category;
             document.getElementById('appPower').value = power;
             document.getElementById('appMinHours').value = minHours;
             document.getElementById('appMaxHours').value = maxHours;
-
-            // Eliminar la tarjeta actual para reemplazarla al guardar
-            // card.remove();
         }
 
+        
         let contadores = [{id:0,valor:0}]; 
 
         function newCopyElem(elem){
@@ -500,10 +504,12 @@ const MARGEN_ERROR = 100;    // Tolerancia en Wh (aceptamos combinaciones que su
                 //numElem = contadores.find(c => c.id === elem.id).valor++;
                 numElem++;
                 span.textContent = "Cantidad: " + numElem;
+                addToList(elem.id);
             });
             button_minus.addEventListener('click', () => {
                 if (numElem > 1) {
                     numElem--;
+                    removeFromList(elem.id);
                     span.textContent = "Cantidad: " + numElem;
                 }
             });
@@ -512,7 +518,28 @@ const MARGEN_ERROR = 100;    // Tolerancia en Wh (aceptamos combinaciones que su
             elemento.appendChild(span);
             elemento.appendChild(button_plus);
             elemento.appendChild(button_minus);
+            addToList(elem.id);
             return elemento;
+        }
+
+        let contador_lista = 0; // Contador para el objeto lista_aparatos2
+
+        function addToList(id){
+            lista_aparatos2[id+contador_lista] = lista_aparatos[id];
+            contador_lista++;
+            console.log("id elementos arrastrados:",lista_aparatos2);
+
+        }
+        function removeFromList(id){
+             const llaves = Object.keys(lista_aparatos2);
+             if (llaves.length > 0) {
+                const ultimaLlave = llaves[llaves.length - 1];
+             
+        // 3. Borramos el elemento del objeto
+        delete lista_aparatos2[ultimaLlave];// error
+             }
+            console.log("id elementos arrastrados:",lista_aparatos2);
+            // según el id proporcionado.
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -570,6 +597,9 @@ const MARGEN_ERROR = 100;    // Tolerancia en Wh (aceptamos combinaciones que su
 
                     </div>
                 `;
+                lista_aparatos[card.id] = { name, category, power, minHours, maxHours };
+                console.log("Aparato agregado a la lista:", lista_aparatos);
+                
 
                 // 4. Configurar eventos de Drag & Drop para esta tarjeta específica
                 card.addEventListener('dragstart', handleDragStart);
@@ -635,6 +665,8 @@ const MARGEN_ERROR = 100;    // Tolerancia en Wh (aceptamos combinaciones que su
                             clonedElement.addEventListener('dragend', handleDragEnd);
                             clonedElement.classList.remove('dragging');
                             zone.appendChild(clonedElement);
+                            
+                            
 
                         } 
                         else if(zone.id === 'zoneA' && draggedElement.parentElement.id === 'zoneB') {
