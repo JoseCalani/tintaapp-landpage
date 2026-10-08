@@ -1,9 +1,9 @@
 /* ==========================================================================
-   TINTA APP - ARQUITECTURA UNIFICADA (INVENTARIO, MONTECARLO Y DASHBOARD)
+   TINTA APP - CÓDIGO JS COMPATIBLE (SIN ES2020 / COMPATIBLE CON CUALQUIER NODE)
    ========================================================================== */
 
 // 1. ESTADO GLOBAL DE LA APLICACIÓN
-const state = {
+var state = {
     // Zona A (Inventario / lista_aparatos)
     inventory: [
         { id: "inv_1", name: "Refrigerador No Frost", category: "Línea Blanca", power: 180, minHours: 24, maxHours: 24, icon: "🧊" },
@@ -12,14 +12,14 @@ const state = {
         { id: "inv_4", name: "Foco LED 10W", category: "Iluminación", power: 10, minHours: 5, maxHours: 8, icon: "💡" },
         { id: "inv_5", name: "Laptop Gamer", category: "Informática", power: 230, minHours: 2, maxHours: 7, icon: "💻" }
     ],
-    // Zona B (Mi Hogar / lista_aparatos2: dispositivos seleccionados con cantidad)
-    homeDevices: [], // Contendrá objetos { instanceId, originalId, name, category, power, minHours, maxHours, icon, quantity, dailyAvg, monthlyAvg }
+    // Zona B (Mi Hogar / lista_aparatos2)
+    homeDevices: [],
     uploadedImageBase64: null,
     editingInventoryId: null
 };
 
 // Íconos por defecto según categoría
-const categoryIcons = {
+var categoryIcons = {
     "Línea Blanca": "🧺",
     "Climatización": "🌡️",
     "Entretenimiento": "🎮",
@@ -29,8 +29,10 @@ const categoryIcons = {
 
 // Helper seguro para asignar texto en el DOM
 function setElementText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
+    var el = document.getElementById(id);
+    if (el) {
+        el.textContent = text;
+    }
 }
 
 // Helper para evitar XSS
@@ -40,40 +42,42 @@ function escapeHtml(str) {
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 /* ==========================================================================
    INICIALIZACIÓN DE EVENTOS
    ========================================================================== */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function() {
     initImageUpload();
     initForm();
     initSearch();
     initDragAndDrop();
     render();
 
-    // Recalcular dinámicamente si se modifica la tarifa mientras se ven los resultados
-    document.getElementById("tariffRate")?.addEventListener("input", () => {
-        if (state.homeDevices.length > 0) {
-            calcular();
-        }
-    });
+    var tariffInput = document.getElementById("tariffRate");
+    if (tariffInput) {
+        tariffInput.addEventListener("input", function() {
+            if (state.homeDevices.length > 0) {
+                calcular();
+            }
+        });
+    }
 });
 
 /* ==========================================================================
    MANEJO DE FORMULARIO, IMAGEN Y EDICIÓN (ZONA A)
    ========================================================================== */
 function initImageUpload() {
-    const input = document.getElementById("appIcon");
+    var input = document.getElementById("appIcon");
     if (!input) return;
 
-    input.addEventListener("change", (e) => {
-        const file = e.target.files[0];
+    input.addEventListener("change", function(e) {
+        var file = e.target.files && e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
+            var reader = new FileReader();
+            reader.onload = function(event) {
                 state.uploadedImageBase64 = event.target.result;
             };
             reader.readAsDataURL(file);
@@ -82,17 +86,23 @@ function initImageUpload() {
 }
 
 function initForm() {
-    const form = document.getElementById("applianceForm");
+    var form = document.getElementById("applianceForm");
     if (!form) return;
 
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", function(e) {
         e.preventDefault();
 
-        const name = document.getElementById("appName")?.value.trim();
-        const category = document.getElementById("appCategory")?.value;
-        const power = parseFloat(document.getElementById("appPower")?.value) || 0;
-        const minHours = parseFloat(document.getElementById("appMinHours")?.value) || 0;
-        const maxHours = parseFloat(document.getElementById("appMaxHours")?.value) || 0;
+        var nameEl = document.getElementById("appName");
+        var categoryEl = document.getElementById("appCategory");
+        var powerEl = document.getElementById("appPower");
+        var minHoursEl = document.getElementById("appMinHours");
+        var maxHoursEl = document.getElementById("appMaxHours");
+
+        var name = nameEl ? nameEl.value.trim() : "";
+        var category = categoryEl ? categoryEl.value : "";
+        var power = powerEl ? parseFloat(powerEl.value) || 0 : 0;
+        var minHours = minHoursEl ? parseFloat(minHoursEl.value) || 0 : 0;
+        var maxHours = maxHoursEl ? parseFloat(maxHoursEl.value) || 0 : 0;
 
         if (minHours > maxHours) {
             alert("El mínimo de horas no puede ser mayor al máximo.");
@@ -101,27 +111,32 @@ function initForm() {
 
         // MODO EDICIÓN
         if (state.editingInventoryId) {
-            const item = state.inventory.find(i => i.id === state.editingInventoryId);
-            if (item) {
-                item.name = name;
-                item.category = category;
-                item.power = power;
-                item.minHours = minHours;
-                item.maxHours = maxHours;
-                if (state.uploadedImageBase64) item.icon = state.uploadedImageBase64;
+            for (var i = 0; i < state.inventory.length; i++) {
+                if (state.inventory[i].id === state.editingInventoryId) {
+                    state.inventory[i].name = name;
+                    state.inventory[i].category = category;
+                    state.inventory[i].power = power;
+                    state.inventory[i].minHours = minHours;
+                    state.inventory[i].maxHours = maxHours;
+                    if (state.uploadedImageBase64) {
+                        state.inventory[i].icon = state.uploadedImageBase64;
+                    }
+                    break;
+                }
             }
             state.editingInventoryId = null;
         } 
         // MODO CREACIÓN
         else {
-            const newAppliance = {
+            var defaultIcon = categoryIcons[category] || "⚡";
+            var newAppliance = {
                 id: "inv_" + Date.now(),
-                name,
-                category,
-                power,
-                minHours,
-                maxHours,
-                icon: state.uploadedImageBase64 || categoryIcons[category] || "⚡"
+                name: name,
+                category: category,
+                power: power,
+                minHours: minHours,
+                maxHours: maxHours,
+                icon: state.uploadedImageBase64 || defaultIcon
             };
             state.inventory.push(newAppliance);
         }
@@ -133,14 +148,26 @@ function initForm() {
 }
 
 function editCard(id) {
-    const item = state.inventory.find(i => i.id === id);
+    var item = null;
+    for (var i = 0; i < state.inventory.length; i++) {
+        if (state.inventory[i].id === id) {
+            item = state.inventory[i];
+            break;
+        }
+    }
     if (!item) return;
 
-    document.getElementById("appName").value = item.name;
-    document.getElementById("appCategory").value = item.category;
-    document.getElementById("appPower").value = item.power;
-    document.getElementById("appMinHours").value = item.minHours;
-    document.getElementById("appMaxHours").value = item.maxHours;
+    var nameEl = document.getElementById("appName");
+    var categoryEl = document.getElementById("appCategory");
+    var powerEl = document.getElementById("appPower");
+    var minHoursEl = document.getElementById("appMinHours");
+    var maxHoursEl = document.getElementById("appMaxHours");
+
+    if (nameEl) nameEl.value = item.name;
+    if (categoryEl) categoryEl.value = item.category;
+    if (powerEl) powerEl.value = item.power;
+    if (minHoursEl) minHoursEl.value = item.minHours;
+    if (maxHoursEl) maxHoursEl.value = item.maxHours;
 
     state.editingInventoryId = id;
 }
@@ -149,16 +176,17 @@ function editCard(id) {
    BÚSQUEDA Y FILTRADO (ZONA A)
    ========================================================================== */
 function initSearch() {
-    const searchInput = document.getElementById("inventorySearch");
+    var searchInput = document.getElementById("inventorySearch");
     if (!searchInput) return;
 
-    searchInput.addEventListener("input", (e) => {
-        const query = e.target.value.toLowerCase();
-        const cards = document.querySelectorAll("#zoneA .card");
-        cards.forEach(card => {
-            const title = card.querySelector(".card-title")?.textContent.toLowerCase() || "";
-            card.style.display = title.includes(query) ? "block" : "none";
-        });
+    searchInput.addEventListener("input", function(e) {
+        var query = e.target.value.toLowerCase();
+        var cards = document.querySelectorAll("#zoneA .card");
+        for (var i = 0; i < cards.length; i++) {
+            var titleEl = cards[i].querySelector(".card-title");
+            var title = titleEl ? titleEl.textContent.toLowerCase() : "";
+            cards[i].style.display = title.indexOf(query) !== -1 ? "block" : "none";
+        }
     });
 }
 
@@ -166,11 +194,22 @@ function initSearch() {
    GESTIÓN DE ZONA B (lista_aparatos2) Y CANTIDADES
    ========================================================================== */
 function addToHome(inventoryId) {
-    const invItem = state.inventory.find(i => i.id === inventoryId);
+    var invItem = null;
+    for (var i = 0; i < state.inventory.length; i++) {
+        if (state.inventory[i].id === inventoryId) {
+            invItem = state.inventory[i];
+            break;
+        }
+    }
     if (!invItem) return;
 
-    // Buscar si ya existe una copia de este equipo en Zona B
-    const existingInHome = state.homeDevices.find(h => h.originalId === inventoryId);
+    var existingInHome = null;
+    for (var j = 0; j < state.homeDevices.length; j++) {
+        if (state.homeDevices[j].originalId === inventoryId) {
+            existingInHome = state.homeDevices[j];
+            break;
+        }
+    }
 
     if (existingInHome) {
         existingInHome.quantity += 1;
@@ -192,7 +231,13 @@ function addToHome(inventoryId) {
 }
 
 function updateQuantity(instanceId, delta) {
-    const index = state.homeDevices.findIndex(h => h.instanceId === instanceId);
+    var index = -1;
+    for (var i = 0; i < state.homeDevices.length; i++) {
+        if (state.homeDevices[i].instanceId === instanceId) {
+            index = i;
+            break;
+        }
+    }
     if (index === -1) return;
 
     state.homeDevices[index].quantity += delta;
@@ -204,7 +249,13 @@ function updateQuantity(instanceId, delta) {
 }
 
 function removeFromHome(instanceId) {
-    state.homeDevices = state.homeDevices.filter(h => h.instanceId !== instanceId);
+    var newHomeDevices = [];
+    for (var i = 0; i < state.homeDevices.length; i++) {
+        if (state.homeDevices[i].instanceId !== instanceId) {
+            newHomeDevices.push(state.homeDevices[i]);
+        }
+    }
+    state.homeDevices = newHomeDevices;
     render();
 }
 
@@ -212,155 +263,158 @@ function removeFromHome(instanceId) {
    ARRASTRE Y SOLTADO (DRAG & DROP)
    ========================================================================== */
 function initDragAndDrop() {
-    const zoneA = document.getElementById("zoneA");
-    const zoneB = document.getElementById("zoneB");
-    const zones = [zoneA, zoneB].filter(Boolean);
+    var zoneA = document.getElementById("zoneA");
+    var zoneB = document.getElementById("zoneB");
+    var zones = [];
+    if (zoneA) zones.push(zoneA);
+    if (zoneB) zones.push(zoneB);
 
-    zones.forEach(zone => {
-        zone.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            zone.classList.add("drag-over");
-        });
+    for (var i = 0; i < zones.length; i++) {
+        (function(zone) {
+            zone.addEventListener("dragover", function(e) {
+                e.preventDefault();
+                zone.classList.add("drag-over");
+            });
 
-        zone.addEventListener("dragleave", () => {
-            zone.classList.remove("drag-over");
-        });
+            zone.addEventListener("dragleave", function() {
+                zone.classList.remove("drag-over");
+            });
 
-        zone.addEventListener("drop", (e) => {
-            e.preventDefault();
-            zone.classList.remove("drag-over");
+            zone.addEventListener("drop", function(e) {
+                e.preventDefault();
+                zone.classList.remove("drag-over");
 
-            const draggedData = e.dataTransfer.getData("text/plain");
-            if (!draggedData) return;
+                var draggedData = e.dataTransfer.getData("text/plain");
+                if (!draggedData) return;
 
-            const [sourceZone, itemId] = draggedData.split(":");
+                var parts = draggedData.split(":");
+                var sourceZone = parts[0];
+                var itemId = parts[1];
 
-            // Arrastrar de Inventario (Zona A) a Mi Hogar (Zona B)
-            if (zone.id === "zoneB" && sourceZone === "zoneA") {
-                addToHome(itemId);
-            }
-            // Arrastrar de Mi Hogar (Zona B) de regreso a Inventario (Zona A) -> Elimina de Zona B
-            else if (zone.id === "zoneA" && sourceZone === "zoneB") {
-                removeFromHome(itemId);
-            }
-        });
-    });
+                if (zone.id === "zoneB" && sourceZone === "zoneA") {
+                    addToHome(itemId);
+                } else if (zone.id === "zoneA" && sourceZone === "zoneB") {
+                    removeFromHome(itemId);
+                }
+            });
+        })(zones[i]);
+    }
 }
 
 /* ==========================================================================
    RENDERIZADO DE ZONA A Y ZONA B
    ========================================================================== */
 function render() {
-    const zoneA = document.getElementById("zoneA");
-    const zoneB = document.getElementById("zoneB");
+    var zoneA = document.getElementById("zoneA");
+    var zoneB = document.getElementById("zoneB");
 
     if (zoneA) zoneA.innerHTML = "";
     if (zoneB) zoneB.innerHTML = "";
 
-    let totalPowerHome = 0;
-    let countHomeTotalItems = 0;
+    var totalPowerHome = 0;
+    var countHomeTotalItems = 0;
 
     // 1. Renderizar Inventario (Zona A)
-    state.inventory.forEach(item => {
-        const card = createInventoryCard(item);
-        if (zoneA) zoneA.appendChild(card);
-    });
+    for (var i = 0; i < state.inventory.length; i++) {
+        var itemA = state.inventory[i];
+        var cardA = createInventoryCard(itemA);
+        if (zoneA) zoneA.appendChild(cardA);
+    }
 
-    // 2. Renderizar Mi Hogar (Zona B - lista_aparatos2)
-    state.homeDevices.forEach(item => {
-        const card = createHomeCard(item);
-        if (zoneB) zoneB.appendChild(card);
+    // 2. Renderizar Mi Hogar (Zona B)
+    for (var j = 0; j < state.homeDevices.length; j++) {
+        var itemB = state.homeDevices[j];
+        var cardB = createHomeCard(itemB);
+        if (zoneB) zoneB.appendChild(cardB);
 
-        totalPowerHome += (item.power * item.quantity);
-        countHomeTotalItems += item.quantity;
-    });
+        totalPowerHome += (itemB.power * itemB.quantity);
+        countHomeTotalItems += itemB.quantity;
+    }
 
     // 3. Actualizar Contadores del DOM
     setElementText("totalCount", state.inventory.length + countHomeTotalItems);
     setElementText("inventoryCount", state.inventory.length);
     setElementText("homeCount", countHomeTotalItems);
     setElementText("homeCountSide", countHomeTotalItems);
-    setElementText("powerCount", `${totalPowerHome} W`);
+    setElementText("powerCount", totalPowerHome + " W");
 }
 
 function createInventoryCard(item) {
-    const card = document.createElement("div");
+    var card = document.createElement("div");
     card.className = "card";
     card.draggable = true;
 
-    card.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", `zoneA:${item.id}`);
+    card.addEventListener("dragstart", function(e) {
+        e.dataTransfer.setData("text/plain", "zoneA:" + item.id);
         card.classList.add("dragging");
     });
 
-    card.addEventListener("dragend", () => {
+    card.addEventListener("dragend", function() {
         card.classList.remove("dragging");
     });
 
-    const isImage = typeof item.icon === "string" && item.icon.startsWith("data:image");
-    const iconHtml = isImage 
-        ? `<img src="${item.icon}" class="card-img-preview" alt="icon">` 
-        : `<div class="card-img-preview">${item.icon || "⚡"}</div>`;
+    var isImage = typeof item.icon === "string" && item.icon.indexOf("data:image") === 0;
+    var iconHtml = isImage 
+        ? '<img src="' + item.icon + '" class="card-img-preview" alt="icon">' 
+        : '<div class="card-img-preview">' + (item.icon || "⚡") + '</div>';
 
-    card.innerHTML = `
-        <div class="card-header">
-            ${iconHtml}
-            <div>
-                <div class="card-title">${escapeHtml(item.name)}</div>
-                <div class="card-category">${escapeHtml(item.category)}</div>
-            </div>
-        </div>
-        <div class="card-body-mini">
-            <div class="data-point"><span class="data-label">Watts</span><span class="data-value">${item.power}W</span></div>
-            <div class="data-point"><span class="data-label">Mín h</span><span class="data-value">${item.minHours}h</span></div>
-            <div class="data-point"><span class="data-label">Máx h</span><span class="data-value">${item.maxHours}h</span></div>
-        </div>
-        <div class="card-actions" style="margin-top: 8px;">
-            <button type="button" class="btn-edit" onclick="editCard('${item.id}')">Editar</button>
-            <button type="button" class="btn-add" onclick="addToHome('${item.id}')">Agregar +</button>
-        </div>
-    `;
+    card.innerHTML = 
+        '<div class="card-header">' +
+            iconHtml +
+            '<div>' +
+                '<div class="card-title">' + escapeHtml(item.name) + '</div>' +
+                '<div class="card-category">' + escapeHtml(item.category) + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="card-body-mini">' +
+            '<div class="data-point"><span class="data-label">Watts</span><span class="data-value">' + item.power + 'W</span></div>' +
+            '<div class="data-point"><span class="data-label">Mín h</span><span class="data-value">' + item.minHours + 'h</span></div>' +
+            '<div class="data-point"><span class="data-label">Máx h</span><span class="data-value">' + item.maxHours + 'h</span></div>' +
+        '</div>' +
+        '<div class="card-actions" style="margin-top: 8px;">' +
+            '<button type="button" class="btn-edit" onclick="editCard(\'' + item.id + '\')">Editar</button>' +
+            '<button type="button" class="btn-add" onclick="addToHome(\'' + item.id + '\')">Agregar +</button>' +
+        '</div>';
 
     return card;
 }
 
 function createHomeCard(item) {
-    const card = document.createElement("div");
+    var card = document.createElement("div");
     card.className = "card card-home";
     card.draggable = true;
 
-    card.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", `zoneB:${item.instanceId}`);
+    card.addEventListener("dragstart", function(e) {
+        e.dataTransfer.setData("text/plain", "zoneB:" + item.instanceId);
         card.classList.add("dragging");
     });
 
-    card.addEventListener("dragend", () => {
+    card.addEventListener("dragend", function() {
         card.classList.remove("dragging");
     });
 
-    const isImage = typeof item.icon === "string" && item.icon.startsWith("data:image");
-    const iconHtml = isImage 
-        ? `<img src="${item.icon}" class="card-img-preview" alt="icon">` 
-        : `<div class="card-img-preview">${item.icon || "⚡"}</div>`;
+    var isImage = typeof item.icon === "string" && item.icon.indexOf("data:image") === 0;
+    var iconHtml = isImage 
+        ? '<img src="' + item.icon + '" class="card-img-preview" alt="icon">' 
+        : '<div class="card-img-preview">' + (item.icon || "⚡") + '</div>';
 
-    card.innerHTML = `
-        <div class="card-header">
-            ${iconHtml}
-            <div>
-                <div class="card-title">${escapeHtml(item.name)}</div>
-                <div class="card-category">${escapeHtml(item.category)}</div>
-            </div>
-        </div>
-        <div class="card-body-mini">
-            <div class="data-point"><span class="data-label">Watts</span><span class="data-value">${item.power}W</span></div>
-            <div class="data-point"><span class="data-label">Uso</span><span class="data-value">${item.minHours}-${item.maxHours}h</span></div>
-        </div>
-        <div class="card-controls" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-            <button type="button" onclick="updateQuantity('${item.instanceId}', -1)">-1</button>
-            <span><strong>Cant: ${item.quantity}</strong></span>
-            <button type="button" onclick="updateQuantity('${item.instanceId}', 1)">+1</button>
-        </div>
-    `;
+    card.innerHTML = 
+        '<div class="card-header">' +
+            iconHtml +
+            '<div>' +
+                '<div class="card-title">' + escapeHtml(item.name) + '</div>' +
+                '<div class="card-category">' + escapeHtml(item.category) + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="card-body-mini">' +
+            '<div class="data-point"><span class="data-label">Watts</span><span class="data-value">' + item.power + 'W</span></div>' +
+            '<div class="data-point"><span class="data-label">Uso</span><span class="data-value">' + item.minHours + '-' + item.maxHours + 'h</span></div>' +
+        '</div>' +
+        '<div class="card-controls" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">' +
+            '<button type="button" onclick="updateQuantity(\'' + item.instanceId + '\', -1)">-1</button>' +
+            '<span><strong>Cant: ' + item.quantity + '</strong></span>' +
+            '<button type="button" onclick="updateQuantity(\'' + item.instanceId + '\', 1)">+1</button>' +
+        '</div>';
 
     return card;
 }
@@ -368,35 +422,29 @@ function createHomeCard(item) {
 /* ==========================================================================
    MOTOR MONTECARLO (lokitoProcess)
    ========================================================================== */
-/**
- * Procesa probabilisticamente los dispositivos de state.homeDevices mediante Montecarlo
- */
 function lokitoProcess() {
-    const ITERACIONES = 10000;
-    let totalDailyAvgKwh = 0;
+    var ITERACIONES = 10000;
+    var totalDailyAvgKwh = 0;
 
-    console.log(`[lokitoProcess] Ejecutando Simulación Montecarlo (${ITERACIONES} iteraciones)...`);
+    for (var i = 0; i < state.homeDevices.length; i++) {
+        var item = state.homeDevices[i];
+        var powerKW = item.power / 1000.0;
+        var minH = item.minHours;
+        var maxH = item.maxHours;
+        var cantidad = item.quantity;
 
-    state.homeDevices.forEach(item => {
-        const powerKW = item.power / 1000.0;
-        const minH = item.minHours;
-        const maxH = item.maxHours;
-        const cantidad = item.quantity;
+        var sumaSimulada = 0;
 
-        let sumaSimulada = 0;
-
-        for (let i = 0; i < ITERACIONES; i++) {
-            // Muestreo aleatorio uniforme entre minHours y maxHours
-            const horasAleatorias = Math.random() * (maxH - minH) + minH;
+        for (var iter = 0; iter < ITERACIONES; iter++) {
+            var horasAleatorias = Math.random() * (maxH - minH) + minH;
             sumaSimulada += (powerKW * horasAleatorias * cantidad);
         }
 
         item.dailyAvg = sumaSimulada / ITERACIONES;
         item.monthlyAvg = item.dailyAvg * 30;
         totalDailyAvgKwh += item.dailyAvg;
-    });
+    }
 
-    console.log(`[lokitoProcess] Consumo total diario simulado: ${totalDailyAvgKwh.toFixed(2)} kWh/día`);
     return totalDailyAvgKwh;
 }
 
@@ -409,108 +457,105 @@ function calcular() {
         return;
     }
 
-    // 1. Ejecutar simulación probabilística Montecarlo
-    const totalDailyKwh = lokitoProcess();
+    var totalDailyKwh = lokitoProcess();
 
-    // 2. Obtener tarifa eléctrica
-    const tariffInput = document.getElementById("tariffRate");
-    const rate = tariffInput ? (parseFloat(tariffInput.value) || 0.15) : 0.15;
+    var tariffInput = document.getElementById("tariffRate");
+    var rate = tariffInput ? (parseFloat(tariffInput.value) || 0.15) : 0.15;
 
-    let topDevice = null;
-    let maxDeviceKwh = 0;
-    const categoryTotals = {};
+    var topDevice = null;
+    var maxDeviceKwh = 0;
+    var categoryTotals = {};
 
-    const tableBody = document.getElementById("detailTableBody");
+    var tableBody = document.getElementById("detailTableBody");
     if (tableBody) tableBody.innerHTML = "";
 
-    // 3. Procesar desglose por dispositivo y categoría
-    state.homeDevices.forEach(device => {
-        const dailyKwh = device.dailyAvg;
-        const monthlyCost = dailyKwh * 30 * rate;
-        const avgHours = (device.minHours + device.maxHours) / 2;
+    for (var i = 0; i < state.homeDevices.length; i++) {
+        var device = state.homeDevices[i];
+        var dailyKwh = device.dailyAvg;
+        var monthlyCost = dailyKwh * 30 * rate;
+        var avgHours = (device.minHours + device.maxHours) / 2;
 
         if (dailyKwh > maxDeviceKwh) {
             maxDeviceKwh = dailyKwh;
             topDevice = device;
         }
 
-        categoryTotals[device.category] = (categoryTotals[device.category] || 0) + dailyKwh;
+        if (!categoryTotals[device.category]) {
+            categoryTotals[device.category] = 0;
+        }
+        categoryTotals[device.category] += dailyKwh;
 
-        // Rellenar filas de la tabla
         if (tableBody) {
-            const impact = totalDailyKwh > 0 ? ((dailyKwh / totalDailyKwh) * 100).toFixed(1) : 0;
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td><strong>${escapeHtml(device.name)} ${device.quantity > 1 ? `(x${device.quantity})` : ''}</strong></td>
-                <td>${escapeHtml(device.category)}</td>
-                <td>${device.power * device.quantity} W</td>
-                <td>${avgHours.toFixed(1)} hrs</td>
-                <td>${dailyKwh.toFixed(2)} kWh</td>
-                <td>$${monthlyCost.toFixed(2)}</td>
-                <td><span class="impact-badge">${impact}%</span></td>
-            `;
+            var impact = totalDailyKwh > 0 ? ((dailyKwh / totalDailyKwh) * 100).toFixed(1) : 0;
+            var row = document.createElement("tr");
+            var nameSuffix = device.quantity > 1 ? " (x" + device.quantity + ")" : "";
+            row.innerHTML = 
+                '<td><strong>' + escapeHtml(device.name) + nameSuffix + '</strong></td>' +
+                '<td>' + escapeHtml(device.category) + '</td>' +
+                '<td>' + (device.power * device.quantity) + ' W</td>' +
+                '<td>' + avgHours.toFixed(1) + ' hrs</td>' +
+                '<td>' + dailyKwh.toFixed(2) + ' kWh</td>' +
+                '<td>$' + monthlyCost.toFixed(2) + '</td>' +
+                '<td><span class="impact-badge">' + impact + '%</span></td>';
             tableBody.appendChild(row);
         }
-    });
+    }
 
-    // 4. Actualizar KPIs Principales
-    const monthlyCostTotal = totalDailyKwh * 30 * rate;
-    const annualCostTotal = totalDailyKwh * 365 * rate;
+    var monthlyCostTotal = totalDailyKwh * 30 * rate;
+    var annualCostTotal = totalDailyKwh * 365 * rate;
 
-    setElementText("kpiDailyKwh", `${totalDailyKwh.toFixed(2)} kWh`);
-    setElementText("kpiDailyCost", `$${(totalDailyKwh * rate).toFixed(2)} / día`);
+    setElementText("kpiDailyKwh", totalDailyKwh.toFixed(2) + " kWh");
+    setElementText("kpiDailyCost", "$" + (totalDailyKwh * rate).toFixed(2) + " / día");
 
-    setElementText("kpiMonthlyCost", `$${monthlyCostTotal.toFixed(2)}`);
-    setElementText("kpiMonthlyKwh", `${(totalDailyKwh * 30).toFixed(1)} kWh / mes`);
+    setElementText("kpiMonthlyCost", "$" + monthlyCostTotal.toFixed(2));
+    setElementText("kpiMonthlyKwh", (totalDailyKwh * 30).toFixed(1) + " kWh / mes");
 
-    setElementText("kpiAnnualCost", `$${annualCostTotal.toFixed(2)}`);
-    setElementText("kpiAnnualKwh", `${(totalDailyKwh * 365).toFixed(0)} kWh / año`);
+    setElementText("kpiAnnualCost", "$" + annualCostTotal.toFixed(2));
+    setElementText("kpiAnnualKwh", (totalDailyKwh * 365).toFixed(0) + " kWh / año");
 
     if (topDevice) {
-        const topShare = ((maxDeviceKwh / totalDailyKwh) * 100).toFixed(0);
+        var topShare = ((maxDeviceKwh / totalDailyKwh) * 100).toFixed(0);
         setElementText("kpiTopDevice", topDevice.name);
-        setElementText("kpiTopDeviceShare", `${topShare}% del consumo total`);
+        setElementText("kpiTopDeviceShare", topShare + "% del consumo total");
     }
 
-    // 5. Renderizar Barras por Categoría
-    const barsContainer = document.getElementById("categoryBars");
+    var barsContainer = document.getElementById("categoryBars");
     if (barsContainer) {
         barsContainer.innerHTML = "";
-        Object.keys(categoryTotals).forEach(cat => {
-            const kwh = categoryTotals[cat];
-            const pct = ((kwh / totalDailyKwh) * 100).toFixed(1);
-            barsContainer.innerHTML += `
-                <div class="cat-bar-item">
-                    <div class="cat-bar-label">
-                        <span>${escapeHtml(cat)}</span>
-                        <span>${pct}% (${kwh.toFixed(2)} kWh/día)</span>
-                    </div>
-                    <div class="cat-bar-track">
-                        <div class="cat-bar-fill" style="width: ${pct}%"></div>
-                    </div>
-                </div>
-            `;
-        });
+        var categories = Object.keys(categoryTotals);
+        for (var j = 0; j < categories.length; j++) {
+            var cat = categories[j];
+            var kwh = categoryTotals[cat];
+            var pct = ((kwh / totalDailyKwh) * 100).toFixed(1);
+            barsContainer.innerHTML += 
+                '<div class="cat-bar-item">' +
+                    '<div class="cat-bar-label">' +
+                        '<span>' + escapeHtml(cat) + '</span>' +
+                        '<span>' + pct + '% (' + kwh.toFixed(2) + ' kWh/día)</span>' +
+                    '</div>' +
+                    '<div class="cat-bar-track">' +
+                        '<div class="cat-bar-fill" style="width: ' + pct + '%"></div>' +
+                    '</div>' +
+                '</div>';
+        }
     }
 
-    // 6. Generar Eco-Tips Personalizados
-    const tipsList = document.getElementById("tipsList");
+    var tipsList = document.getElementById("tipsList");
     if (tipsList) {
         tipsList.innerHTML = "";
         if (topDevice) {
-            tipsList.innerHTML += `<li>💡 Su equipo con mayor gasto es <strong>${escapeHtml(topDevice.name)}</strong>. Revisa regularmente su mantenimiento o desconéctalo en horas pico.</li>`;
+            tipsList.innerHTML += '<li>💡 Su equipo con mayor gasto es <strong>' + escapeHtml(topDevice.name) + '</strong>. Revisa regularmente su mantenimiento o desconéctalo en horas pico.</li>';
         }
         if (totalDailyKwh * 30 > 300) {
-            tipsList.innerHTML += `<li>⚠️ Su consumo supera los 300 kWh/mes. Considere reemplazar artefactos antiguos por equipos con certificación A+++.</li>`;
+            tipsList.innerHTML += '<li>⚠️ Su consumo supera los 300 kWh/mes. Considere reemplazar artefactos antiguos por equipos con certificación A+++.</li>';
         } else {
-            tipsList.innerHTML += `<li>🌱 ¡Excelente! Su perfil energético está dentro de los rangos moderados de eficiencia.</li>`;
+            tipsList.innerHTML += '<li>🌱 ¡Excelente! Su perfil energético está dentro de los rangos moderados de eficiencia.</li>';
         }
     }
 
-    // 7. Alternar Vistas del Workspace y Resultados
-    const workspaceContent = document.getElementById("workspaceContent");
-    const resultsView = document.getElementById("resultsView");
-    const sidebar = document.querySelector(".sidebar");
+    var workspaceContent = document.getElementById("workspaceContent");
+    var resultsView = document.getElementById("resultsView");
+    var sidebar = document.querySelector(".sidebar");
 
     if (workspaceContent) workspaceContent.classList.add("hidden");
     if (sidebar) sidebar.style.display = "none";
@@ -521,9 +566,9 @@ function calcular() {
 }
 
 function volverAlWorkspace() {
-    const workspaceContent = document.getElementById("workspaceContent");
-    const resultsView = document.getElementById("resultsView");
-    const sidebar = document.querySelector(".sidebar");
+    var workspaceContent = document.getElementById("workspaceContent");
+    var resultsView = document.getElementById("resultsView");
+    var sidebar = document.querySelector(".sidebar");
 
     if (resultsView) {
         resultsView.classList.add("hidden");
@@ -533,7 +578,6 @@ function volverAlWorkspace() {
     if (sidebar) sidebar.style.display = "";
 }
 
-// Alias para mantener compatibilidad con ambas firmas
 function volverAlPanel() {
     volverAlWorkspace();
 }
