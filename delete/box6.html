@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinta App · Gestión de Energía & Analytics</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js CDN for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Executive Dark Palette & Glassmorphism Rules */
+        :root {
+            --bg-dark: #08090b;
+            --panel-bg: rgba(18, 22, 28, 0.75);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --yellow-accent: #facc15;
+            --yellow-glow: rgba(250, 204, 21, 0.15);
+            --green-accent: #4ade80;
+            --green-glow: rgba(74, 222, 128, 0.15);
+            --blue-accent: #38bdf8;
+            --red-accent: #f43f5e;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f3f4f6;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(250, 204, 21, 0.04), transparent 30%),
+                radial-gradient(circle at 90% 90%, rgba(74, 222, 128, 0.04), transparent 35%);
+            background-attachment: fixed;
+        }
+
+        /* Glassmorphism styling */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--yellow-accent);
+        }
+
+        /* Drag and Drop visual feedback */
+        .drop-zone.drag-over {
+            border-color: var(--yellow-accent) !important;
+            background: var(--yellow-glow) !important;
+        }
+
+        #zoneB.drag-over {
+            border-color: var(--green-accent) !important;
+            background: var(--green-glow) !important;
+        }
+
+        /* Animations */
+        .view-transition {
+            transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .view-hidden {
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            display: none !important;
+        }
+
+        .card-hover {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Print Media Styles */
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .glass-panel { background: white !important; border: 1px solid #ccc !important; color: black !important; box-shadow: none !important; }
+            .text-white, .text-gray-200, .text-gray-300 { color: black !important; }
+            .bg-dark { background: white !important; }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col antialiased">
+
+    <!-- TOPBAR NAVBAR -->
+    <header class="topbar h-14 flex-shrink-0 px-6 glass-panel border-b border-white/10 flex items-center justify-between z-30 no-print">
+        <div class="flex items-center gap-3 w-60">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center font-black text-black shadow-lg shadow-yellow-500/20 text-lg">
+                ⚡
+            </div>
+            <div class="text-base font-extrabold tracking-tight text-white">
+                Tinta <span class="text-yellow-400">App</span>
+                <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-white/10 text-gray-300 ml-1">Pro v2</span>
+            </div>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-1">
+            <button type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/30">
+                ⚡ Consumo & Gestión
+            </button>
+            <button type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition">
+                ▦ Inventario
+            </button>
+            <button type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition">
+                ⌂ Mi Hogar
+            </button>
+            <button type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition">
+                ◒ Métricas
+            </button>
+        </nav>
+
+        <div class="flex items-center gap-2">
+            <span class="hidden sm:inline-block text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                ● Sistema Operativo
+            </span>
+            <button type="button" class="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 transition bg-white/5">
+                🔔
+            </button>
+            <button type="button" class="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 transition bg-white/5">
+                ⚙️
+            </button>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-emerald-400 text-black font-black text-xs flex items-center justify-center shadow-md">
+                TA
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 min-height-0 relative overflow-hidden">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: EDITOR / WORKSPACE VIEW            -->
+        <!-- ========================================== -->
+        <section id="view-editor" class="view-transition h-full p-4 flex gap-4 overflow-hidden">
+            
+            <!-- SIDEBAR: FORM & QUICK STATS -->
+            <aside class="w-80 flex-shrink-0 flex flex-col gap-3 h-full overflow-y-auto pr-1">
+                
+                <!-- NEW DEVICE FORM PANEL -->
+                <div class="glass-panel rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-yellow-400 font-bold text-lg">
+                            ＋
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-bold text-white">Nuevo dispositivo</h2>
+                            <p class="text-[11px] text-gray-400">Agrega un electrodoméstico al catálogo</p>
+                        </div>
+                    </div>
+
+                    <!-- REQUIRED ID: applianceForm -->
+                    <form id="applianceForm" class="space-y-3">
+                        <div>
+                            <label for="appName" class="block text-[11px] font-semibold text-gray-300 mb-1">Nombre Dispositivo</label>
+                            <!-- REQUIRED ID: appName -->
+                            <input type="text" id="appName" class="w-full h-9 px-3 rounded-lg bg-black/40 border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 transition" placeholder="Ej. Refri LG Inverter" required>
+                        </div>
+
+                        <div>
+                            <label for="appCategory" class="block text-[11px] font-semibold text-gray-300 mb-1">Categoría</label>
+                            <!-- REQUIRED ID: appCategory -->
+                            <select id="appCategory" class="w-full h-9 px-3 rounded-lg bg-black/40 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 transition" required>
+                                <option value="" disabled selected class="bg-gray-900">Selecciona categoría</option>
+                                <option value="Línea Blanca" class="bg-gray-900">Línea Blanca</option>
+                                <option value="Climatización" class="bg-gray-900">Climatización</option>
+                                <option value="Entretenimiento" class="bg-gray-900">Entretenimiento</option>
+                                <option value="Iluminación" class="bg-gray-900">Iluminación</option>
+                                <option value="Informática" class="bg-gray-900">Informática</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="appPower" class="block text-[11px] font-semibold text-gray-300 mb-1">Potencia (Watts)</label>
+                            <!-- REQUIRED ID: appPower -->
+                            <input type="number" id="appPower" class="w-full h-9 px-3 rounded-lg bg-black/40 border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 transition" placeholder="Ej. 150" min="1" required>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label for="appMinHours" class="block text-[11px] font-semibold text-gray-300 mb-1">Mín. h/día</label>
+                                <!-- REQUIRED ID: appMinHours -->
+                                <input type="number" id="appMinHours" class="w-full h-9 px-3 rounded-lg bg-black/40 border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 transition" placeholder="0" min="0" max="24" required>
+                            </div>
+                            <div>
+                                <label for="appMaxHours" class="block text-[11px] font-semibold text-gray-300 mb-1">Máx. h/día</label>
+                                <!-- REQUIRED ID: appMaxHours -->
+                                <input type="number" id="appMaxHours" class="w-full h-9 px-3 rounded-lg bg-black/40 border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 transition" placeholder="24" min="0" max="24" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full h-9 mt-1 rounded-lg bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-extrabold text-xs shadow-lg shadow-yellow-500/20 hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-1.5">
+                            <span>＋</span> Guardar Dispositivo
+                        </button>
+                    </form>
+                </div>
+
+                <!-- MINI STATS SUMMARY -->
+                <div class="glass-panel rounded-2xl p-4 shadow-xl flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-3 flex items-center justify-between">
+                            <span>Resumen Rápido</span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div class="p-2.5 rounded-xl bg-black/30 border border-white/5">
+                                <span class="block text-[10px] text-gray-400 font-medium">Total Catálogo</span>
+                                <!-- REQUIRED ID: totalCount -->
+                                <strong id="totalCount" class="text-base font-black text-white">0</strong>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-black/30 border border-white/5">
+                                <span class="block text-[10px] text-gray-400 font-medium">En Hogar</span>
+                                <!-- REQUIRED ID: homeCountSide -->
+                                <strong id="homeCountSide" class="text-base font-black text-emerald-400">0</strong>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-black/30 border border-white/5 col-span-2">
+                                <span class="block text-[10px] text-gray-400 font-medium">Potencia Instalada</span>
+                                <!-- REQUIRED ID: powerCount -->
+                                <strong id="powerCount" class="text-base font-black text-yellow-400">0 W</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-400">
+                        <span>Estado Tarifa:</span>
+                        <span class="text-xs font-bold text-gray-200 bg-white/10 px-2 py-0.5 rounded">$0.15 / kWh</span>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- WORKSPACE INTERACTIVE ZONES -->
+            <main class="flex-1 min-w-0 flex flex-col gap-3 h-full overflow-hidden">
+                
+                <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
+                    
+                    <!-- ZONE A: INVENTORY -->
+                    <div class="drop-zone-container glass-panel rounded-2xl flex flex-col overflow-hidden border border-white/10 shadow-2xl">
+                        <!-- Header -->
+                        <div class="px-4 py-3 border-b border-white/10 bg-white/[0.02] flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-lg bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-yellow-400 font-bold text-sm">
+                                    ▦
+                                </div>
+                                <div class="truncate">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-xs font-bold text-white truncate">Inventario Disponible</h3>
+                                        <!-- REQUIRED ID: inventoryCount -->
+                                        <span id="inventoryCount" class="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-extrabold text-gray-300">0</span>
+                                    </div>
+                                    <p class="text-[10px] text-gray-400 truncate">Arrastra o haz clic para añadir a tu hogar</p>
+                                </div>
+                            </div>
+
+                            <div class="w-44 flex-shrink-0">
+                                <!-- REQUIRED ID: inventorySearch -->
+                                <input id="inventorySearch" type="search" class="w-full h-8 px-3 rounded-lg bg-black/50 border border-white/10 text-[11px] text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 transition" placeholder="⌕ Buscar equipo...">
+                            </div>
+                        </div>
+
+                        <!-- Drop Zone A Element -->
+                        <!-- REQUIRED ID: zoneA -->
+                        <div id="zoneA" class="drop-zone flex-1 overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 align-content-start relative">
+                            <!-- Cards inserted dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- ZONE B: MY HOME -->
+                    <div class="drop-zone-container glass-panel rounded-2xl flex flex-col overflow-hidden border border-emerald-500/20 shadow-2xl">
+                        <!-- Header -->
+                        <div class="px-4 py-3 border-b border-emerald-500/20 bg-emerald-500/[0.03] flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm">
+                                    ⌂
+                                </div>
+                                <div class="truncate">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-xs font-bold text-white truncate">Mi Hogar (Aparatos Activos)</h3>
+                                        <!-- REQUIRED ID: homeCount -->
+                                        <span id="homeCount" class="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-extrabold text-emerald-400">0</span>
+                                    </div>
+                                    <p class="text-[10px] text-emerald-400/80 truncate">Dispositivos a incluir en el cálculo</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Drop Zone B Element -->
+                        <!-- REQUIRED ID: zoneB -->
+                        <div id="zoneB" class="drop-zone flex-1 overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 align-content-start relative">
+                            <!-- Cards inserted dynamically via JS -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- MAIN CALCULATE ACTION BUTTON -->
+                <button onclick="calcular()" type="button" class="w-full h-12 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-emerald-400 text-black font-black text-sm tracking-wide shadow-xl shadow-yellow-500/10 hover:shadow-yellow-500/20 hover:brightness-105 active:scale-[0.99] transition flex items-center justify-center gap-2 flex-shrink-0 cursor-pointer">
+                    <span class="text-lg">⚡</span> CALCULAR CONSUMO & GENERAR INFORME DETALLADO
+                </button>
+
+            </main>
+
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: HIGH-DETAIL RESULTS PANEL          -->
+        <!-- ========================================== -->
+        <section id="view-results" class="view-transition view-hidden absolute inset-0 p-4 lg:p-6 overflow-y-auto flex flex-col gap-6">
+            
+            <!-- RESULTS TOP TOOLBAR -->
+            <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-2xl no-print">
+                <button onclick="regresarAEditor()" type="button" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer">
+                    <span>←</span> Volver / Modificar Dispositivos
+                </button>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                        <label for="tariffInput" class="text-xs text-gray-400 font-medium">Tarifa ($/kWh):</label>
+                        <input id="tariffInput" type="number" step="0.01" value="0.15" class="w-20 h-7 px-2 rounded bg-white/10 border border-white/20 text-xs font-bold text-yellow-400 text-center focus:outline-none focus:border-yellow-400" onchange="recalcularTarifa(this.value)">
+                    </div>
+
+                    <button onclick="window.print()" type="button" class="px-4 py-2 rounded-xl bg-yellow-400 text-black font-extrabold text-xs shadow-lg shadow-yellow-400/20 hover:brightness-110 flex items-center gap-2 transition cursor-pointer">
+                        <span>🖨️</span> Imprimir / Guardar Informe
+                    </button>
+                </div>
+            </div>
+
+            <!-- EXECUTIVE KPI CARDS GRID -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                
+                <!-- KPI 1: kWh / Mes -->
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-yellow-400 flex flex-col justify-between shadow-xl">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                        <span>Consumo Estimado</span>
+                        <span>⚡</span>
+                    </div>
+                    <div class="my-2">
+                        <span id="kpiKwhMonth" class="text-2xl font-black text-white">0.0</span>
+                        <span class="text-xs font-bold text-yellow-400 ml-1">kWh / mes</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400">Escenario Promedio Calculado</p>
+                </div>
+
+                <!-- KPI 2: Costo Estimado -->
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-emerald-400 flex flex-col justify-between shadow-xl">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                        <span>Costo Mensual</span>
+                        <span>💵</span>
+                    </div>
+                    <div class="my-2">
+                        <span id="kpiCostMonth" class="text-2xl font-black text-emerald-400">$0.00</span>
+                        <span class="text-xs font-semibold text-gray-400 ml-1">/ mes</span>
+                    </div>
+                    <p id="kpiCostDaily" class="text-[10px] text-emerald-400/80">$0.00 por día est.</p>
+                </div>
+
+                <!-- KPI 3: Potencia Total -->
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-sky-400 flex flex-col justify-between shadow-xl">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                        <span>Carga Conectada</span>
+                        <span>🔌</span>
+                    </div>
+                    <div class="my-2">
+                        <span id="kpiTotalKw" class="text-2xl font-black text-sky-400">0.00</span>
+                        <span class="text-xs font-bold text-sky-400 ml-1">kW</span>
+                    </div>
+                    <p id="kpiDeviceCount" class="text-[10px] text-gray-400">0 aparatos en total</p>
+                </div>
+
+                <!-- KPI 4: Huella CO2 -->
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-rose-400 flex flex-col justify-between shadow-xl">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                        <span>Huella Carbono</span>
+                        <span>🌱</span>
+                    </div>
+                    <div class="my-2">
+                        <span id="kpiCarbon" class="text-2xl font-black text-rose-400">0.0</span>
+                        <span class="text-xs font-semibold text-gray-400 ml-1">kg CO₂/mes</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400">Factor 0.42 kg/kWh</p>
+                </div>
+
+                <!-- KPI 5: Score de Eficiencia -->
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-purple-400 flex flex-col justify-between shadow-xl">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                        <span>Eficiencia Global</span>
+                        <span>🏆</span>
+                    </div>
+                    <div class="my-2 flex items-baseline gap-2">
+                        <span id="kpiGrade" class="text-3xl font-black text-purple-400">A</span>
+                        <span id="kpiGradeStatus" class="text-xs font-bold text-gray-300">Excelente</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400">Índice W/h por equipo</p>
+                </div>
+
+            </div>
+
+            <!-- CHARTS & VISUAL ANALYTICS SECTION -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                
+                <!-- CATEGORY BREAKDOWN DONUT -->
+                <div class="glass-panel rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xs font-extrabold text-white uppercase tracking-wider mb-1">Distribución por Categoría</h3>
+                        <p class="text-[11px] text-gray-400 mb-4">Porcentaje del consumo total mensual</p>
+                    </div>
+                    <div class="relative w-full h-48 flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- RANGE COMPARISON SCENARIOS -->
+                <div class="glass-panel rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xs font-extrabold text-white uppercase tracking-wider mb-1">Escenarios Mínimo vs Máximo</h3>
+                        <p class="text-[11px] text-gray-400 mb-4">Comparativa según horas diarias de uso</p>
+                    </div>
+
+                    <div class="space-y-4 my-2">
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span class="text-emerald-400">Escenario Mínimo (Ahorro)</span>
+                                <span id="minScenarioKwh" class="text-white">0 kWh</span>
+                            </div>
+                            <div class="w-full bg-black/50 h-3 rounded-full overflow-hidden border border-white/10">
+                                <div id="minBar" class="bg-emerald-400 h-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <span id="minScenarioCost" class="text-[10px] text-gray-400">$0.00 / mes</span>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span class="text-rose-400">Escenario Máximo (Alto Uso)</span>
+                                <span id="maxScenarioKwh" class="text-white">0 kWh</span>
+                            </div>
+                            <div class="w-full bg-black/50 h-3 rounded-full overflow-hidden border border-white/10">
+                                <div id="maxBar" class="bg-rose-400 h-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <span id="maxScenarioCost" class="text-[10px] text-gray-400">$0.00 / mes</span>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-gray-300">
+                        💡 <strong class="text-yellow-400">Brecha potencial:</strong> Controlar los límites máximos puede ahorrarte hasta <span id="potentialSavingsDiff" class="font-bold text-emerald-400">$0.00</span> al mes.
+                    </div>
+                </div>
+
+                <!-- CATEGORY PROGRESS BARS -->
+                <div class="glass-panel rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xs font-extrabold text-white uppercase tracking-wider mb-1">Detalle Carga por Grupo</h3>
+                        <p class="text-[11px] text-gray-400 mb-4">Consumo total agrupado por sector</p>
+                    </div>
+
+                    <div id="categoryBarsContainer" class="space-y-3 overflow-y-auto max-h-48 pr-1">
+                        <!-- Bars dynamically rendered -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- DETAILED MATRIX TABLE -->
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-white">Matriz Detallada de Consumo Doméstico</h3>
+                        <p class="text-xs text-gray-400">Desglose individual por equipo en 'Mi Hogar'</p>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 font-bold">
+                        Total Equipos: <span id="tableDeviceCount">0</span>
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-white/10 text-gray-400 font-extrabold uppercase text-[10px] tracking-wider">
+                                <th class="py-3 px-3">Dispositivo</th>
+                                <th class="py-3 px-3">Categoría</th>
+                                <th class="py-3 px-3 text-center">Potencia</th>
+                                <th class="py-3 px-3 text-center">Uso Diario</th>
+                                <th class="py-3 px-3 text-right">Consumo Mensual</th>
+                                <th class="py-3 px-3 text-right">Costo Estimado</th>
+                                <th class="py-3 px-3 text-center">% Del Total</th>
+                                <th class="py-3 px-3 text-center">Impacto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrixTableBody" class="divide-y divide-white/5 text-gray-200">
+                            <!-- Rows generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DIAGNOSTICS & SMART SAVINGS RECOMMENDATIONS -->
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl border border-yellow-500/20 bg-gradient-to-r from-yellow-500/5 via-transparent to-emerald-500/5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-xl bg-yellow-400/20 text-yellow-400 font-black flex items-center justify-center text-lg">
+                        🧠
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-white">Diagnóstico & Plan de Ahorro Inteligente</h3>
+                        <p class="text-xs text-gray-400">Recomendaciones automatizadas según tus hábitos de consumo</p>
+                    </div>
+                </div>
+
+                <div id="savingsInsightsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                    <!-- Dynamic Insight Cards -->
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT APP LOGIC                       -->
+    <!-- ========================================== -->
+    <script>
+        // Global Application State
+        let currentTariff = 0.15; // $/kWh default
+        let categoryChartInstance = null;
+
+        // Preloaded Electrodomésticos Dataset
+        let appliances = [
+            { id: 'dev-1', name: 'Refrigerador Inverter ❄️', category: 'Línea Blanca', power: 150, minHours: 18, maxHours: 24, icon: '❄️', zone: 'B' },
+            { id: 'dev-2', name: 'Aire Acondicionado 12k BTU 🌀', category: 'Climatización', power: 1200, minHours: 4, maxHours: 8, icon: '🌀', zone: 'B' },
+            { id: 'dev-3', name: 'Smart TV 55" 4K 📺', category: 'Entretenimiento', power: 110, minHours: 3, maxHours: 7, icon: '📺', zone: 'B' },
+            { id: 'dev-4', name: 'Microondas Digital ⚡', category: 'Línea Blanca', power: 1100, minHours: 0.2, maxHours: 0.8, icon: '⚡', zone: 'A' },
+            { id: 'dev-5', name: 'Lavadora Frontal 12kg 🧺', category: 'Línea Blanca', power: 500, minHours: 1, maxHours: 2, icon: '🧺', zone: 'A' },
+            { id: 'dev-6', name: 'Laptop Workstation 💻', category: 'Informática', power: 90, minHours: 6, maxHours: 10, icon: '💻', zone: 'B' },
+            { id: 'dev-7', name: 'Foco LED Smart 12W 💡', category: 'Iluminación', power: 12, minHours: 5, maxHours: 10, icon: '💡', zone: 'B' },
+            { id: 'dev-8', name: 'Consola Next-Gen 🎮', category: 'Entretenimiento', power: 200, minHours: 2, maxHours: 5, icon: '🎮', zone: 'A' },
+            { id: 'dev-9', name: 'Cafetera Espresso ☕', category: 'Línea Blanca', power: 850, minHours: 0.2, maxHours: 0.5, icon: '☕', zone: 'A' }
+        ];
+
+        // Helper: Category Icon Mapping
+        function getCategoryIcon(cat) {
+            switch(cat) {
+                case 'Línea Blanca': return '🍳';
+                case 'Climatización': return '❄️';
+                case 'Entretenimiento': return '📺';
+                case 'Iluminación': return '💡';
+                case 'Informática': return '💻';
+                default: return '⚡';
+            }
+        }
+
+        // DOM Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            renderApplianceCards();
+            setupFormAndSearch();
+            setupDragAndDrop();
+            updateStats();
+        });
+
+        // Render Appliance Cards into #zoneA and #zoneB
+        function renderApplianceCards() {
+            const zoneA = document.getElementById('zoneA');
+            const zoneB = document.getElementById('zoneB');
+            const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
+
+            zoneA.innerHTML = '';
+            zoneB.innerHTML = '';
+
+            appliances.forEach(dev => {
+                // Filter for search
+                if (dev.zone === 'A' && searchTerm && !dev.name.toLowerCase().includes(searchTerm) && !dev.category.toLowerCase().includes(searchTerm)) {
+                    return;
+                }
+
+                const card = createCardElement(dev);
+                if (dev.zone === 'A') {
+                    zoneA.appendChild(card);
+                } else {
+                    zoneB.appendChild(card);
+                }
+            });
+
+            // Empty state placeholders
+            if (zoneA.children.length === 0) {
+                zoneA.innerHTML = `<div class="col-span-full h-32 flex flex-col items-center justify-center text-gray-500 text-xs text-center border-2 border-dashed border-white/10 rounded-xl p-4">
+                    <span>▦ No hay dispositivos disponibles</span>
+                </div>`;
+            }
+
+            if (zoneB.children.length === 0) {
+                zoneB.innerHTML = `<div class="col-span-full h-32 flex flex-col items-center justify-center text-emerald-400/60 text-xs text-center border-2 border-dashed border-emerald-500/20 rounded-xl p-4">
+                    <span>⌂ Arrastra o añade equipos aquí para calcular tu consumo</span>
+                </div>`;
+            }
+
+            updateStats();
+        }
+
+        // Build HTML Card Element for Device
+        function createCardElement(dev) {
+            const card = document.createElement('div');
+            card.className = `card card-hover glass-panel p-3 rounded-xl cursor-grab active:cursor-grabbing border ${dev.zone === 'B' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/10 bg-white/5'} flex flex-col justify-between`;
+            card.draggable = true;
+            card.id = dev.id;
+
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-8 h-8 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-base flex-shrink-0">
+                            ${dev.icon || getCategoryIcon(dev.category)}
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold text-white truncate">${dev.name}</h4>
+                            <span class="text-[9px] text-gray-400 block truncate">${dev.category}</span>
+                        </div>
+                    </div>
+                    <button onclick="toggleDeviceZone('${dev.id}')" type="button" class="text-xs font-bold px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-gray-300 transition" title="Mover zona">
+                        ${dev.zone === 'A' ? '＋' : '✕'}
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-1 pt-2 border-t border-white/10 text-center text-[10px]">
+                    <div class="bg-black/30 p-1 rounded border border-white/5">
+                        <span class="block text-[8px] text-gray-500 font-bold uppercase">Potencia</span>
+                        <span class="font-extrabold ${dev.zone === 'B' ? 'text-emerald-400' : 'text-yellow-400'}">${dev.power}W</span>
+                    </div>
+                    <div class="bg-black/30 p-1 rounded border border-white/5">
+                        <span class="block text-[8px] text-gray-500 font-bold uppercase">Mín h/d</span>
+                        <span class="font-bold text-gray-300">${dev.minHours}h</span>
+                    </div>
+                    <div class="bg-black/30 p-1 rounded border border-white/5">
+                        <span class="block text-[8px] text-gray-500 font-bold uppercase">Máx h/d</span>
+                        <span class="font-bold text-gray-300">${dev.maxHours}h</span>
+                    </div>
+                </div>
+            `;
+
+            // Drag Start
+            card.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', dev.id);
+                card.classList.add('opacity-50');
+            });
+
+            card.addEventListener('dragend', () => {
+                card.classList.remove('opacity-50');
+            });
+
+            return card;
+        }
+
+        // Toggle device between Zone A and Zone B on button click
+        function toggleDeviceZone(id) {
+            const dev = appliances.find(d => d.id === id);
+            if (dev) {
+                dev.zone = dev.zone === 'A' ? 'B' : 'A';
+                renderApplianceCards();
+            }
+        }
+
+        function setupDragAndDrop() {
+            const zones = [
+                { el: document.getElementById('zoneA'), zoneId: 'A' },
+                { el: document.getElementById('zoneB'), zoneId: 'B' }
+            ];
+
+            zones.forEach(({ el, zoneId }) => {
+                el.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    el.classList.add('drag-over');
+                });
+
+                el.addEventListener('dragleave', () => {
+                    el.classList.remove('drag-over');
+                });
+
+                el.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    el.classList.remove('drag-over');
+                    const devId = e.dataTransfer.getData('text/plain');
+                    const dev = appliances.find(d => d.id === devId);
+                    if (dev && dev.zone !== zoneId) {
+                        dev.zone = zoneId;
+                        renderApplianceCards();
+                    }
+                });
+            });
+        }
+
+        // Setup Form Submissions and Search Inputs
+        function setupFormAndSearch() {
+            const form = document.getElementById('applianceForm');
+            const searchInput = document.getElementById('inventorySearch');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('appName').value.trim();
+                const category = document.getElementById('appCategory').value;
+                const power = parseFloat(document.getElementById('appPower').value);
+                const minHours = parseFloat(document.getElementById('appMinHours').value);
+                const maxHours = parseFloat(document.getElementById('appMaxHours').value);
+
+                if (!name || !category || isNaN(power) || isNaN(minHours) || isNaN(maxHours)) return;
+
+                const newDev = {
+                    id: 'dev-' + Date.now(),
+                    name: name,
+                    category: category,
+                    power: power,
+                    minHours: minHours,
+                    maxHours: maxHours,
+                    icon: getCategoryIcon(category),
+                    zone: 'A' // Default to inventory
+                };
+
+                appliances.push(newDev);
+                form.reset();
+                renderApplianceCards();
+            });
+
+            searchInput.addEventListener('input', () => {
+                renderApplianceCards();
+            });
+        }
+
+        // Update Counter Stats
+        function updateStats() {
+            const zoneAItems = appliances.filter(d => d.zone === 'A');
+            const zoneBItems = appliances.filter(d => d.zone === 'B');
+
+            document.getElementById('totalCount').innerText = appliances.length;
+            document.getElementById('inventoryCount').innerText = zoneAItems.length;
+            document.getElementById('homeCount').innerText = zoneBItems.length;
+            document.getElementById('homeCountSide').innerText = zoneBItems.length;
+
+            const totalPowerB = zoneBItems.reduce((acc, item) => acc + item.power, 0);
+            document.getElementById('powerCount').innerText = totalPowerB >= 1000 ? `${(totalPowerB / 1000).toFixed(2)} kW` : `${totalPowerB} W`;
+        }
+
+        // CALCULATION & VIEW SWITCHING FUNCTION
+        function calcular() {
+            const homeItems = appliances.filter(d => d.zone === 'B');
+
+            if (homeItems.length === 0) {
+                alert('Por favor agrega al menos un dispositivo a "Mi Hogar" para realizar el cálculo.');
+                return;
+            }
+
+            // Perform Metrics Calculation
+            calculateDetailedMetrics(homeItems);
+
+            // Transition Views
+            document.getElementById('view-editor').classList.add('view-hidden');
+            document.getElementById('view-results').classList.remove('view-hidden');
+        }
+
+        function regresarAEditor() {
+            document.getElementById('view-results').classList.add('view-hidden');
+            document.getElementById('view-editor').classList.remove('view-hidden');
+        }
+
+        function recalcularTarifa(val) {
+            currentTariff = parseFloat(val) || 0.15;
+            const homeItems = appliances.filter(d => d.zone === 'B');
+            calculateDetailedMetrics(homeItems);
+        }
+
+        // Core Analytics Calculation Engine
+        function calculateDetailedMetrics(items) {
+            let totalPowerW = 0;
+            let totalKwhMinMonth = 0;
+            let totalKwhMaxMonth = 0;
+            let totalKwhAvgMonth = 0;
+
+            const categoryBreakdown = {};
+
+            items.forEach(dev => {
+                totalPowerW += dev.power;
+
+                // Daily kWh
+                const avgHours = (dev.minHours + dev.maxHours) / 2;
+                const kwhMinDaily = (dev.power * dev.minHours) / 1000;
+                const kwhMaxDaily = (dev.power * dev.maxHours) / 1000;
+                const kwhAvgDaily = (dev.power * avgHours) / 1000;
+
+                // Monthly kWh (30 days)
+                const kwhMinMonthly = kwhMinDaily * 30;
+                const kwhMaxMonthly = kwhMaxDaily * 30;
+                const kwhAvgMonthly = kwhAvgDaily * 30;
+
+                totalKwhMinMonth += kwhMinMonthly;
+                totalKwhMaxMonth += kwhMaxMonthly;
+                totalKwhAvgMonth += kwhAvgMonthly;
+
+                // Category Grouping
+                if (!categoryBreakdown[dev.category]) {
+                    categoryBreakdown[dev.category] = { kwh: 0, power: 0, count: 0 };
+                }
+                categoryBreakdown[dev.category].kwh += kwhAvgMonthly;
+                categoryBreakdown[dev.category].power += dev.power;
+                categoryBreakdown[dev.category].count += 1;
+            });
+
+            // Costs
+            const costAvgMonth = totalKwhAvgMonth * currentTariff;
+            const costMinMonth = totalKwhMinMonth * currentTariff;
+            const costMaxMonth = totalKwhMaxMonth * currentTariff;
+            const costDaily = costAvgMonth / 30;
+
+            // CO2 Carbon Footprint
+            const carbonCo2 = totalKwhAvgMonth * 0.42; // ~0.42 kg CO2 per kWh
+
+            // Efficiency Grade logic
+            let grade = 'A+';
+            let gradeStatus = 'Super Eficiente';
+            if (totalKwhAvgMonth > 500) { grade = 'F'; gradeStatus = 'Consumo Crítico'; }
+            else if (totalKwhAvgMonth > 350) { grade = 'D'; gradeStatus = 'Consumo Elevado'; }
+            else if (totalKwhAvgMonth > 200) { grade = 'C'; gradeStatus = 'Consumo Moderado'; }
+            else if (totalKwhAvgMonth > 100) { grade = 'B'; gradeStatus = 'Buena Eficiencia'; }
+
+            // Update KPI DOM Elements
+            document.getElementById('kpiKwhMonth').innerText = totalKwhAvgMonth.toFixed(1);
+            document.getElementById('kpiCostMonth').innerText = `$${costAvgMonth.toFixed(2)}`;
+            document.getElementById('kpiCostDaily').innerText = `$${costDaily.toFixed(2)} por día est.`;
+            document.getElementById('kpiTotalKw').innerText = (totalPowerW / 1000).toFixed(2);
+            document.getElementById('kpiDeviceCount').innerText = `${items.length} aparatos seleccionados`;
+            document.getElementById('kpiCarbon').innerText = carbonCo2.toFixed(1);
+            document.getElementById('kpiGrade').innerText = grade;
+            document.getElementById('kpiGradeStatus').innerText = gradeStatus;
+
+            // Update Scenario Comparison
+            document.getElementById('minScenarioKwh').innerText = `${totalKwhMinMonth.toFixed(1)} kWh`;
+            document.getElementById('minScenarioCost').innerText = `$${costMinMonth.toFixed(2)} / mes`;
+            document.getElementById('maxScenarioKwh').innerText = `${totalKwhMaxMonth.toFixed(1)} kWh`;
+            document.getElementById('maxScenarioCost').innerText = `$${costMaxMonth.toFixed(2)} / mes`;
+
+            const maxRef = Math.max(totalKwhMaxMonth, 1);
+            document.getElementById('minBar').style.width = `${(totalKwhMinMonth / maxRef) * 100}%`;
+            document.getElementById('maxBar').style.width = `100%`;
+            document.getElementById('potentialSavingsDiff').innerText = `$${(costMaxMonth - costMinMonth).toFixed(2)}`;
+
+            // Render Donut Chart & Category Progress Bars
+            renderCategoryChart(categoryBreakdown, totalKwhAvgMonth);
+            renderCategoryProgressBars(categoryBreakdown, totalKwhAvgMonth);
+
+            // Populate Matrix Table
+            populateMatrixTable(items, totalKwhAvgMonth);
+
+            // Generate Smart Insights
+            generateSmartInsights(items, totalKwhAvgMonth);
+        }
+
+        function renderCategoryChart(breakdown, totalKwh) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const labels = Object.keys(breakdown);
+            const data = labels.map(cat => breakdown[cat].kwh);
+
+            const colors = ['#facc15', '#4ade80', '#38bdf8', '#f43f5e', '#a855f7', '#fb923c'];
+
+            if (categoryChartInstance) {
+                categoryChartInstance.destroy();
+            }
+
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#d1d5db', font: { size: 10, family: 'Inter' } }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function renderCategoryProgressBars(breakdown, totalKwh) {
+            const container = document.getElementById('categoryBarsContainer');
+            container.innerHTML = '';
+
+            Object.keys(breakdown).forEach(cat => {
+                const item = breakdown[cat];
+                const pct = totalKwh > 0 ? ((item.kwh / totalKwh) * 100).toFixed(1) : 0;
+
+                const row = document.createElement('div');
+                row.className = 'space-y-1';
+                row.innerHTML = `
+                    <div class="flex justify-between text-xs">
+                        <span class="text-gray-300 font-semibold">${getCategoryIcon(cat)} ${cat} (${item.count})</span>
+                        <span class="text-yellow-400 font-bold">${item.kwh.toFixed(1)} kWh (${pct}%)</span>
+                    </div>
+                    <div class="w-full bg-black/40 h-2 rounded-full overflow-hidden border border-white/5">
+                        <div class="bg-gradient-to-r from-yellow-400 to-amber-500 h-full" style="width: ${pct}%"></div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function populateMatrixTable(items, totalKwh) {
+            const tbody = document.getElementById('matrixTableBody');
+            document.getElementById('tableDeviceCount').innerText = items.length;
+            tbody.innerHTML = '';
+
+            // Sort devices by highest consumption
+            const sorted = [...items].sort((a, b) => {
+                const avgA = (a.minHours + a.maxHours) / 2;
+                const avgB = (b.minHours + b.maxHours) / 2;
+                return (b.power * avgB) - (a.power * avgA);
+            });
+
+            sorted.forEach(dev => {
+                const avgHours = (dev.minHours + dev.maxHours) / 2;
+                const kwhMonthly = ((dev.power * avgHours) / 1000) * 30;
+                const costMonthly = kwhMonthly * currentTariff;
+                const sharePct = totalKwh > 0 ? ((kwhMonthly / totalKwh) * 100) : 0;
+
+                let impactBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Bajo</span>`;
+                if (sharePct > 25) {
+                    impactBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-rose-500/10 text-rose-400 border border-rose-500/20">Alto Impacto</span>`;
+                } else if (sharePct > 10) {
+                    impactBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">Medio</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-white/5 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-3 font-bold text-white flex items-center gap-2">
+                        <span>${dev.icon || getCategoryIcon(dev.category)}</span>
+                        <span>${dev.name}</span>
+                    </td>
+                    <td class="py-3 px-3 text-gray-400">${dev.category}</td>
+                    <td class="py-3 px-3 text-center font-bold text-yellow-400">${dev.power} W</td>
+                    <td class="py-3 px-3 text-center text-gray-300">${avgHours.toFixed(1)} h/día</td>
+                    <td class="py-3 px-3 text-right font-extrabold text-white">${kwhMonthly.toFixed(1)} kWh</td>
+                    <td class="py-3 px-3 text-right font-extrabold text-emerald-400">$${costMonthly.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center font-bold text-gray-300">${sharePct.toFixed(1)}%</td>
+                    <td class="py-3 px-3 text-center">${impactBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Generate AI Savings Diagnostics Engine Cards
+        function generateSmartInsights(items, totalKwh) {
+            const container = document.getElementById('savingsInsightsContainer');
+            container.innerHTML = '';
+
+            // Find top consumers
+            const sorted = [...items].sort((a, b) => {
+                const avgA = (a.minHours + a.maxHours) / 2;
+                const avgB = (b.minHours + b.maxHours) / 2;
+                return (b.power * avgB) - (a.power * avgA);
+            });
+
+            if (sorted.length > 0) {
+                const top1 = sorted[0];
+                const avgH1 = (top1.minHours + top1.maxHours) / 2;
+                const kwh1 = ((top1.power * avgH1) / 1000) * 30;
+                const pct1 = totalKwh > 0 ? ((kwh1 / totalKwh) * 100).toFixed(0) : 0;
+                const save1 = (((top1.power * 1) / 1000) * 30) * currentTariff;
+
+                container.innerHTML += `
+                    <div class="p-3 rounded-xl bg-black/40 border border-yellow-500/30 text-xs">
+                        <strong class="text-yellow-400 block mb-1">🎯 Mayor Consumidor: ${top1.name}</strong>
+                        <p class="text-gray-300">Representa el <span class="font-bold text-white">${pct1}%</span> de toda tu factura. Reducir solo 1 hora diaria de uso te ahorraría <span class="font-bold text-emerald-400">$${save1.toFixed(2)}/mes</span>.</p>
+                    </div>
+                `;
+            }
+
+            // Check for air conditioning or heavy climate units
+            const climate = items.filter(i => i.category === 'Climatización');
+            if (climate.length > 0) {
+                container.innerHTML += `
+                    <div class="p-3 rounded-xl bg-black/40 border border-sky-500/30 text-xs">
+                        <strong class="text-sky-400 block mb-1">❄️ Optimización Climatización</strong>
+                        <p class="text-gray-300">Mantener tus equipos de aire en 24°C Inverter en lugar de 18°C reduce hasta un <span class="font-bold text-emerald-400">30% del consumo de potencia</span> sin perder confort.</p>
+                    </div>
+                `;
+            }
+
+            // Standby or phantom consumption tip
+            container.innerHTML += `
+                <div class="p-3 rounded-xl bg-black/40 border border-emerald-500/30 text-xs">
+                    <strong class="text-emerald-400 block mb-1">🔌 Tip Ahorro Vampiro</strong>
+                    <p class="text-gray-300">Desconectar consolas y laptops al 100% evita la carga en reposo, ahorrando aprox <span class="font-bold text-emerald-400">$2.50 a $5.00/mes</span> en consumo fantasma.</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

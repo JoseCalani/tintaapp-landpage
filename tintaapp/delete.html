@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinta App · Gestión de Energía</title>
+    <link rel="stylesheet" href="delete.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <script src="delete.js" defer></script>
+</head>
+
+<body>
+<div class="app">
+
+    <!-- BARRA SUPERIOR / TOPBAR -->
+    <header class="topbar">
+        <div class="brand">
+            <img src="ICON_TINTAAPP3.png" alt="Logo de Tinta App" class="brand-logo" onerror="this.style.display='none'">
+            <div class="brand-name">Tinta <span>App</span></div>
+        </div>
+
+        <nav class="nav" aria-label="Navegación principal">
+            <button class="active" type="button" id="navConsumo">⚡ Consumo</button>
+            <button type="button">▦ Inventario</button>
+            <button type="button">⌂ Mi hogar</button>
+            <button type="button">◒ Historial</button>
+            <button type="button">⌁ Análisis</button>
+        </nav>
+
+        <div class="top-actions">
+            <button class="icon-btn" type="button" title="Notificaciones">♢</button>
+            <button class="icon-btn" type="button" title="Configuración">⚙</button>
+            <div class="avatar">TA</div>
+        </div>
+    </header>
+
+    <!-- VISTA 1: CONFIGURACIÓN Y ARRASTRE DE DISPOSITIVOS -->
+    <section class="content" id="workspaceContent">
+
+        <!-- SIDEBAR DE REGISTRO -->
+        <aside class="sidebar">
+
+            <div class="section-title">
+                <span>Configuración rápida</span>
+            </div>
+
+            <div class="form-panel">
+                <div class="panel-heading">
+                    <label class="icon-upload-mini" for="appIcon" title="Subir imagen">
+                        <svg class="camera-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/>
+                            <line x1="12" y1="9" x2="12" y2="15"/>
+                            <line x1="9" y1="12" x2="15" y2="12"/>
+                        </svg>
+                    </label>
+                    <input type="file" id="appIcon" accept="image/png,image/jpeg,image/webp" hidden>
+
+                    <div class="panel-text-group">
+                        <h2>Nuevo dispositivo</h2>
+                        <div class="subtitle">Añade un electrodoméstico</div>
+                    </div>
+                </div>
+
+                <form id="applianceForm">
+                    <div class="form-group">
+                        <label for="appName">Dispositivo</label>
+                        <input type="text" id="appName" class="form-control" placeholder="Ej. Refrigerador LG" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appCategory">Categoría</label>
+                        <select id="appCategory" class="form-control" required>
+                            <option value="" disabled selected>Selecciona categoría</option>
+                            <option value="Línea Blanca">Línea Blanca</option>
+                            <option value="Climatización">Climatización</option>
+                            <option value="Entretenimiento">Entretenimiento</option>
+                            <option value="Iluminación">Iluminación</option>
+                            <option value="Informática">Informática</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appPower">Potencia · Watts</label>
+                        <input type="number" id="appPower" class="form-control" placeholder="Ej. 150" min="1" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appMinHours">Mín. h/día</label>
+                            <input type="number" id="appMinHours" class="form-control" placeholder="0" min="0" max="24" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appMaxHours">Máx. h/día</label>
+                            <input type="number" id="appMaxHours" class="form-control" placeholder="24" min="0" max="24" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">＋ Guardar dispositivo</button>
+                </form>
+            </div>
+
+            <div class="side-divider"></div>
+
+            <div class="section-title">
+                <span>Resumen rápido</span>
+            </div>
+
+            <div class="side-mini-stats">
+                <div class="mini-stat">
+                    <small>Dispositivos</small>
+                    <strong id="totalCount">0</strong>
+                </div>
+                <div class="mini-stat">
+                    <small>En hogar</small>
+                    <strong class="green" id="homeCountSide">0</strong>
+                </div>
+                <div class="mini-stat">
+                    <small>Potencia</small>
+                    <strong class="yellow" id="powerCount">0 W</strong>
+                </div>
+                <div class="mini-stat">
+                    <small>Estado</small>
+                    <strong class="green">Activo</strong>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- ÁREA DE TRABAJO CON ZONAS DE ARRASTRE -->
+        <main class="workspace">
+
+            <div class="drop-zone-container">
+                <div class="drop-zone-title">
+                    <span class="zone-icon">▦</span>
+                    <span class="zone-title-text">
+                        <strong>Inventario</strong>
+                        <small>Dispositivos disponibles</small>
+                    </span>
+                    <span class="zone-count" id="inventoryCount">0</span>
+
+                    <div class="inventory-tools">
+                        <div class="search-wrap">
+                            <span>⌕</span>
+                            <input id="inventorySearch" class="search-input" type="search" placeholder="Buscar dispositivo...">
+                        </div>
+                        <button class="filter-btn" type="button" title="Filtros">☷</button>
+                    </div>
+                </div>
+
+                <div id="zoneA" class="drop-zone">
+                    <!-- Las tarjetas generadas dinámicamente aparecerán aquí -->
+                </div>
+            </div>
+
+            <div class="drop-zone-container">
+                <div class="drop-zone-title">
+                    <span class="zone-icon">⌂</span>
+                    <span class="zone-title-text">
+                        <strong>Mi Hogar</strong>
+                        <small>Aparatos seleccionados</small>
+                    </span>
+                    <span class="zone-count" id="homeCount">0</span>
+                </div>
+
+                <div id="zoneB" class="drop-zone">
+                </div>
+            </div>
+
+            <button class="btn-calculate-main" onclick="calcular()">⚡ Calcular consumo</button>
+
+        </main>
+    </section>
+
+    <!-- VISTA 2: PANEL DE RESULTADOS Y CÁLCULOS DETALLADOS -->
+    <section class="results-view hidden" id="resultsView">
+        
+        <header class="results-header">
+            <button class="btn-back" onclick="volverAlWorkspace()">
+                ← Volver a editar
+            </button>
+            
+            <div class="results-title-group">
+                <h2>Análisis Energético de Mi Hogar</h2>
+                <p>Cálculo estimado basado en patrones de uso diario</p>
+            </div>
+
+            <div class="rate-config">
+                <label for="tariffRate">Tarifa kWh ($):</label>
+                <input type="number" id="tariffRate" step="0.01" value="0.15" min="0.01">
+            </div>
+        </header>
+
+        <div class="results-grid">
+
+            <!-- TARJETAS DE INDICADORES PRINCIPALES (KPIs) -->
+            <div class="kpi-card">
+                <div class="kpi-icon yellow">⚡</div>
+                <div class="kpi-info">
+                    <small>Consumo Diario Est.</small>
+                    <strong id="kpiDailyKwh">0.00 kWh</strong>
+                    <span id="kpiDailyCost">$0.00 / día</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon green">📅</div>
+                <div class="kpi-info">
+                    <small>Gasto Mensual Est.</small>
+                    <strong id="kpiMonthlyCost">$0.00</strong>
+                    <span id="kpiMonthlyKwh">0.00 kWh / mes</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon blue">📈</div>
+                <div class="kpi-info">
+                    <small>Proyección Anual</small>
+                    <strong id="kpiAnnualCost">$0.00</strong>
+                    <span id="kpiAnnualKwh">0 kWh / año</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon red">🔥</div>
+                <div class="kpi-info">
+                    <small>Mayor Consumo</small>
+                    <strong id="kpiTopDevice">Ninguno</strong>
+                    <span id="kpiTopDeviceShare">0% del total</span>
+                </div>
+            </div>
+
+            <!-- DESGLOSE POR CATEGORÍA -->
+            <div class="results-panel category-panel">
+                <h3>📊 Distribución por Categoría</h3>
+                <div id="categoryBars" class="category-bars-container">
+                    <!-- Se llena dinámicamente con JS -->
+                </div>
+            </div>
+
+            <!-- CONSEJOS DE OPTIMIZACIÓN ENERGÉTICA -->
+            <div class="results-panel tips-panel">
+                <h3>🌱 Recomendaciones Eco-Smart</h3>
+                <ul id="tipsList" class="tips-list">
+                    <!-- Se llena dinámicamente -->
+                </ul>
+            </div>
+
+            <!-- TABLA COMPLETA DETALLADA -->
+            <div class="results-panel table-panel">
+                <h3>📋 Desglose Detallado por Electrodoméstico</h3>
+                <div class="table-scroll">
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Dispositivo</th>
+                                <th>Categoría</th>
+                                <th>Potencia</th>
+                                <th>Horas Prom.</th>
+                                <th>kWh / Día</th>
+                                <th>Costo / Mes</th>
+                                <th>Impacto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+</body>
+</html>
