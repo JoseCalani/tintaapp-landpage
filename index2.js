@@ -1,10 +1,5 @@
-/* ==========================================================================
-   TINTA APP - CÓDIGO JS COMPATIBLE (SIN ES2020 / COMPATIBLE CON CUALQUIER NODE)
-   ========================================================================== */
 
-// 1. ESTADO GLOBAL DE LA APLICACIÓN
 var state = {
-    // Zona A (Inventario / lista_aparatos)
     inventory: [
         { id: "inv_1", name: "Refrigerador No Frost", category: "Línea Blanca", power: 180, minHours: 24, maxHours: 24, icon: "🧊" },
         { id: "inv_2", name: "Aire Acondicionado 12000 BTU", category: "Climatización", power: 1200, minHours: 4, maxHours: 8, icon: "❄️" },
@@ -12,13 +7,13 @@ var state = {
         { id: "inv_4", name: "Foco LED 10W", category: "Iluminación", power: 10, minHours: 5, maxHours: 8, icon: "💡" },
         { id: "inv_5", name: "Laptop Gamer", category: "Informática", power: 230, minHours: 2, maxHours: 7, icon: "💻" }
     ],
-    // Zona B (Mi Hogar / lista_aparatos2)
+   
+    
     homeDevices: [],
     uploadedImageBase64: null,
     editingInventoryId: null
 };
 
-// Íconos por defecto según categoría
 var categoryIcons = {
     "Línea Blanca": "🧺",
     "Climatización": "🌡️",
@@ -27,7 +22,7 @@ var categoryIcons = {
     "Informática": "🖥️"
 };
 
-// Helper seguro para asignar texto en el DOM
+
 function setElementText(id, text) {
     var el = document.getElementById(id);
     if (el) {
@@ -35,7 +30,7 @@ function setElementText(id, text) {
     }
 }
 
-// Helper para evitar XSS
+
 function escapeHtml(str) {
     if (!str) return "";
     return String(str)
@@ -46,9 +41,7 @@ function escapeHtml(str) {
         .replace(/'/g, "&#039;");
 }
 
-/* ==========================================================================
-   INICIALIZACIÓN DE EVENTOS
-   ========================================================================== */
+
 document.addEventListener("DOMContentLoaded", function() {
     initImageUpload();
     initForm();
@@ -66,9 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-/* ==========================================================================
-   MANEJO DE FORMULARIO, IMAGEN Y EDICIÓN (ZONA A)
-   ========================================================================== */
+
 function initImageUpload() {
     var input = document.getElementById("appIcon");
     if (!input) return;
@@ -109,7 +100,7 @@ function initForm() {
             return;
         }
 
-        // MODO EDICIÓN
+        
         if (state.editingInventoryId) {
             for (var i = 0; i < state.inventory.length; i++) {
                 if (state.inventory[i].id === state.editingInventoryId) {
@@ -126,7 +117,8 @@ function initForm() {
             }
             state.editingInventoryId = null;
         } 
-        // MODO CREACIÓN
+        
+        
         else {
             var defaultIcon = categoryIcons[category] || "⚡";
             var newAppliance = {
@@ -172,9 +164,8 @@ function editCard(id) {
     state.editingInventoryId = id;
 }
 
-/* ==========================================================================
-   BÚSQUEDA Y FILTRADO (ZONA A)
-   ========================================================================== */
+
+
 function initSearch() {
     var searchInput = document.getElementById("inventorySearch");
     if (!searchInput) return;
@@ -190,9 +181,7 @@ function initSearch() {
     });
 }
 
-/* ==========================================================================
-   GESTIÓN DE ZONA B (lista_aparatos2) Y CANTIDADES
-   ========================================================================== */
+
 function addToHome(inventoryId) {
     var invItem = null;
     for (var i = 0; i < state.inventory.length; i++) {
@@ -259,9 +248,7 @@ function removeFromHome(instanceId) {
     render();
 }
 
-/* ==========================================================================
-   ARRASTRE Y SOLTADO (DRAG & DROP)
-   ========================================================================== */
+
 function initDragAndDrop() {
     var zoneA = document.getElementById("zoneA");
     var zoneB = document.getElementById("zoneB");
@@ -301,9 +288,8 @@ function initDragAndDrop() {
     }
 }
 
-/* ==========================================================================
-   RENDERIZADO DE ZONA A Y ZONA B
-   ========================================================================== */
+
+
 function render() {
     var zoneA = document.getElementById("zoneA");
     var zoneB = document.getElementById("zoneB");
@@ -419,10 +405,8 @@ function createHomeCard(item) {
     return card;
 }
 
-/* ==========================================================================
-   MOTOR MONTECARLO (lokitoProcess)
-   ========================================================================== */
-function lokitoProcess() {
+
+function montecarlo() {
     var ITERACIONES = 10000;
     var totalDailyAvgKwh = 0;
 
@@ -448,16 +432,13 @@ function lokitoProcess() {
     return totalDailyAvgKwh;
 }
 
-/* ==========================================================================
-   CÁLCULOS GENERALES Y DESPLIEGUE DEL PANEL DE RESULTADOS
-   ========================================================================== */
 function calcular() {
     if (state.homeDevices.length === 0) {
         alert("Arrastra o agrega al menos un dispositivo a 'Mi Hogar' para realizar los cálculos.");
         return;
     }
 
-    var totalDailyKwh = lokitoProcess();
+    var totalDailyKwh = montecarlo();
 
     var tariffInput = document.getElementById("tariffRate");
     var rate = tariffInput ? (parseFloat(tariffInput.value) || 0.15) : 0.15;
@@ -495,7 +476,7 @@ function calcular() {
                 '<td>' + (device.power * device.quantity) + ' W</td>' +
                 '<td>' + avgHours.toFixed(1) + ' hrs</td>' +
                 '<td>' + dailyKwh.toFixed(2) + ' kWh</td>' +
-                '<td>$' + monthlyCost.toFixed(2) + '</td>' +
+                '<td> Bs ' + monthlyCost.toFixed(2) + '</td>' +
                 '<td><span class="impact-badge">' + impact + '%</span></td>';
             tableBody.appendChild(row);
         }
@@ -505,13 +486,13 @@ function calcular() {
     var annualCostTotal = totalDailyKwh * 365 * rate;
 
     setElementText("kpiDailyKwh", totalDailyKwh.toFixed(2) + " kWh");
-    setElementText("kpiDailyCost", "$" + (totalDailyKwh * rate).toFixed(2) + " / día");
+    setElementText("kpiDailyCost", "Bs " + (totalDailyKwh * rate).toFixed(2) + " / día");
 
-    setElementText("kpiMonthlyCost", "$" + monthlyCostTotal.toFixed(2));
+    setElementText("kpiMonthlyCost", "Bs " + monthlyCostTotal.toFixed(2));
     setElementText("kpiMonthlyKwh", (totalDailyKwh * 30).toFixed(1) + " kWh / mes");
 
-    setElementText("kpiAnnualCost", "$" + annualCostTotal.toFixed(2));
-    setElementText("kpiAnnualKwh", (totalDailyKwh * 365).toFixed(0) + " kWh / año");
+    setElementText("kpiAnnualCost", "Bs " + annualCostTotal.toFixed(2));
+    setElementText("kpiAnnualKwh", (totalDailyKwh * 365).toFixed(0) + " kWh / año"); //corregir
 
     if (topDevice) {
         var topShare = ((maxDeviceKwh / totalDailyKwh) * 100).toFixed(0);
@@ -544,12 +525,12 @@ function calcular() {
     if (tipsList) {
         tipsList.innerHTML = "";
         if (topDevice) {
-            tipsList.innerHTML += '<li>💡 Su equipo con mayor gasto es <strong>' + escapeHtml(topDevice.name) + '</strong>. Revisa regularmente su mantenimiento o desconéctalo en horas pico.</li>';
+            tipsList.innerHTML += '<li>💡 Su equipo con mayor gasto es <strong>' + escapeHtml(topDevice.name) + '</strong>. Revisa su mantenimiento o desconéctalo en horas pico.</li>';
         }
         if (totalDailyKwh * 30 > 300) {
-            tipsList.innerHTML += '<li>⚠️ Su consumo supera los 300 kWh/mes. Considere reemplazar artefactos antiguos por equipos con certificación A+++.</li>';
+            tipsList.innerHTML += '<li>⚠️ Su consumo supera los 300 kWh/mes.</li>';
         } else {
-            tipsList.innerHTML += '<li>🌱 ¡Excelente! Su perfil energético está dentro de los rangos moderados de eficiencia.</li>';
+            tipsList.innerHTML += '<li>🌱 ¡Excelente! consumo moderado de eficiencia.</li>';
         }
     }
 

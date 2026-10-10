@@ -6,7 +6,7 @@
 <title>Tinta App Plus · Cosumo de Energía</title>
 <link rel="stylesheet" href="index.css">
 <link rel="icon" href="favicon.ico" type="image/x-icon">
-<script src="index2.js" defer></script>
+<script src="index.js" defer></script>
 </head>
 
 <body>
@@ -131,7 +131,7 @@
 
         </aside>
 
-         <main class="workspace">
+         <main class="workspace" id="workspaceContent">
 
             <div class="drop-zone-container">
                 <div class="drop-zone-title">
@@ -169,7 +169,11 @@
                 <div id="zoneB" class="drop-zone">
                 </div>
             </div>
-
+<div class="form-group" style="margin-bottom: 15px;">
+    <label for="realConsumption"><strong>Consumo en el Mes (kWh):</strong></label>
+    <input type="number" id="realConsumption" value="10" step="50" class="form-control" placeholder="Ej: 1000">
+    <small style="color: #666; display: block; margin-top: 4px;">Valor de referencia diario para las combinaciones de Montecarlo.</small>
+</div>
             <button class="btn-calculate-main" onclick="calcular()">⚡ Calcular consumo</button>
 
         </main>
@@ -191,7 +195,7 @@
             </div>
 
             <div class="rate-config">
-                <label for="tariffRate">Tarifa kWh ($):</label>
+                <label for="tariffRate">Tarifa kWh (Bs):</label>
                 <input type="number" id="tariffRate" step="0.01" value="0.15" min="0.01">
             </div>
         </header>
@@ -204,7 +208,7 @@
                 <div class="kpi-info">
                     <small>Consumo Diario Est.</small>
                     <strong id="kpiDailyKwh">0.00 kWh</strong>
-                    <span id="kpiDailyCost">$0.00 / día</span>
+                    <span id="kpiDailyCost">Bs 0.00 / día</span>
                 </div>
             </div>
 
@@ -212,7 +216,7 @@
                 <div class="kpi-icon green">📅</div>
                 <div class="kpi-info">
                     <small>Gasto Mensual Est.</small>
-                    <strong id="kpiMonthlyCost">$0.00</strong>
+                    <strong id="kpiMonthlyCost">Bs 0.00</strong>
                     <span id="kpiMonthlyKwh">0.00 kWh / mes</span>
                 </div>
             </div>
@@ -221,7 +225,7 @@
                 <div class="kpi-icon blue">📈</div>
                 <div class="kpi-info">
                     <small>Proyección Anual</small>
-                    <strong id="kpiAnnualCost">$0.00</strong>
+                    <strong id="kpiAnnualCost">Bs 0.00</strong>
                     <span id="kpiAnnualKwh">0 kWh / año</span>
                 </div>
             </div>
@@ -245,7 +249,7 @@
 
             <!-- CONSEJOS DE OPTIMIZACIÓN ENERGÉTICA -->
             <div class="results-panel tips-panel">
-                <h3>🌱 Recomendaciones Eco-Smart</h3>
+                <h3>Recomendaciones:</h3>
                 <ul id="tipsList" class="tips-list">
                     <!-- Se llena dinámicamente -->
                 </ul>
@@ -261,7 +265,7 @@
                                 <th>Dispositivo</th>
                                 <th>Categoría</th>
                                 <th>Potencia</th>
-                                <th>Horas Prom.</th>
+                                <th>Horas Promedio</th>
                                 <th>kWh / Día</th>
                                 <th>Costo / Mes</th>
                                 <th>Impacto</th>
